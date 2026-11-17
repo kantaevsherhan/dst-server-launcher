@@ -21,7 +21,7 @@ CGNAT traversal, real Workshop gameplay compatibility or all distro runtime comb
 
 ## Observed on 2026-11-17
 
-- Flutter analyze: no issues. 52 unit/widget tests passed on Windows; the first CI run passed the same checks on Windows and Linux.
+- Flutter analyze: no issues. 56 unit/widget tests passed on Windows; the first CI run passed the same checks on Windows and Linux.
 - Windows release built locally with VS 2022 C++ Build Tools; both Windows installer/portable and Linux tar.gz packaging passed GitHub Actions.
 - The native release window launched and exposed the expected RU accessibility tree. Window screenshot capture was unreliable; documentation screenshots are real Flutter renderer captures from test/visual/render_screenshots.dart, not mockups.
 - Screenshot inspection found and fixed missing Cyrillic display glyphs (Manrope replaces Outfit), a narrow hero banner and navigation ink layers. The enlarged-text check caught and fixed the status-row overflow at 200%.

@@ -7,7 +7,7 @@ void main() {
   testWidgets('Desktop opens and renders localized dashboard', (tester) async {
     await app.main();
     await tester.pumpAndSettle();
-    expect(find.text('DST'), findsOneWidget);
+    expect(find.text('DST Server Launcher'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
