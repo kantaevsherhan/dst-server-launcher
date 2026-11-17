@@ -5,8 +5,8 @@ This is an independent management tool, not an official game distribution.
 No game, server, Steam or extracted Klei artwork is bundled. Install the server from official sources.
 Workshop previews are fetched from public metadata at runtime; their authors retain all rights.
 
-Inter and Outfit fonts: SIL Open Font License 1.1. Full notices in assets/fonts/.
-Source: https://github.com/google/fonts/tree/main/ofl/inter and https://github.com/google/fonts/tree/main/ofl/outfit.
+Inter and Manrope fonts: SIL Open Font License 1.1. Full notices in assets/fonts/.
+Source: https://github.com/google/fonts/tree/main/ofl/inter and https://github.com/google/fonts/tree/main/ofl/manrope.
 Phosphor Flutter: MIT, https://pub.dev/packages/phosphor_flutter.
 Flutter and Dart: BSD 3-Clause, https://github.com/flutter/flutter/blob/master/LICENSE.
 Other Dart packages retain their own notices (visible through Flutter's license registry).

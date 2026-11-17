@@ -247,7 +247,7 @@ class _LauncherShellState extends State<LauncherShell> with WindowListener {
                                             Text(
                                               'DST',
                                               style: TextStyle(
-                                                fontFamily: 'Outfit',
+                                                fontFamily: 'Manrope',
                                                 fontWeight: FontWeight.w700,
                                                 fontSize: 23,
                                                 letterSpacing: 2,

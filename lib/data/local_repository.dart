@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:archive/archive.dart';
 import 'package:path/path.dart' as p;
@@ -261,7 +262,7 @@ class ZipBackupService implements BackupService {
     final file = File(
       p.join(dir.path, '${DateTime.now().microsecondsSinceEpoch}.zip'),
     );
-    final bytes = await Future(() => ZipEncoder().encode(archive));
+    final bytes = await Isolate.run(() => ZipEncoder().encode(archive));
     await file.writeAsBytes(bytes, flush: true);
     return file.path;
   }

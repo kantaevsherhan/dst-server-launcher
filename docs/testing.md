@@ -18,3 +18,13 @@ Before claiming live game integration complete, manually verify:
 
 Not yet proven by automated tests: Klei acceptance, game console stdin in every DST build, internet reachability,
 CGNAT traversal, real Workshop gameplay compatibility or all distro runtime combinations. The UI never simulates them.
+
+## Observed on 2026-11-17
+
+- Flutter analyze: no issues. 52 unit/widget tests passed on Windows; the first CI run passed the same checks on Windows and Linux.
+- Windows release built locally with VS 2022 C++ Build Tools; both Windows installer/portable and Linux tar.gz packaging passed GitHub Actions.
+- The native release window launched and exposed the expected RU accessibility tree. Window screenshot capture was unreliable; documentation screenshots are real Flutter renderer captures from tool/render_screenshots_test.dart, not mockups.
+- Screenshot inspection found and fixed missing Cyrillic display glyphs (Manrope replaces Outfit), a narrow hero banner and navigation ink layers. The enlarged-text check caught and fixed the status-row overflow at 200%.
+- The local Windows native debug integration test compiled but Windows Application Control blocked execution. No security settings were changed. Native smoke tests are also configured on clean CI hosts.
+- Valve GetPublishedFileDetails returned result=1, title Global Positions and consumer_app_id=322330 for public Workshop ID 378160973.
+- Actual DST gameplay/Klei login and internet joining remain unverified; no real token was requested, stored or published during development.

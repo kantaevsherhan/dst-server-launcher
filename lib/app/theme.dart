@@ -41,7 +41,7 @@ ThemeData launcherTheme(Brightness brightness) {
   return base.copyWith(
     textTheme: base.textTheme.copyWith(
       displaySmall: TextStyle(
-        fontFamily: 'Outfit',
+        fontFamily: 'Manrope',
         fontSize: 40,
         height: 1.12,
         fontWeight: FontWeight.w600,
@@ -49,14 +49,14 @@ ThemeData launcherTheme(Brightness brightness) {
         color: scheme.onSurface,
       ),
       headlineMedium: TextStyle(
-        fontFamily: 'Outfit',
+        fontFamily: 'Manrope',
         fontSize: 30,
         height: 1.2,
         fontWeight: FontWeight.w600,
         color: scheme.onSurface,
       ),
       titleLarge: TextStyle(
-        fontFamily: 'Outfit',
+        fontFamily: 'Manrope',
         fontSize: 22,
         fontWeight: FontWeight.w600,
         color: scheme.onSurface,

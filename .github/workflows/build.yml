@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Linux build dependencies
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libx11-dev libxi-dev
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libx11-dev libxi-dev xvfb
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.47.7'
@@ -28,6 +28,12 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed lib test integration_test
       - run: flutter analyze
       - run: flutter test
+      - name: Windows native smoke test
+        if: runner.os == 'Windows'
+        run: flutter test integration_test/desktop_smoke_test.dart -d windows --reporter expanded
+      - name: Linux native smoke test
+        if: runner.os == 'Linux'
+        run: xvfb-run -a flutter test integration_test/desktop_smoke_test.dart -d linux --reporter expanded
       - name: Build Windows
         if: runner.os == 'Windows'
         run: flutter build windows --release

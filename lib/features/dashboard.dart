@@ -33,7 +33,7 @@ class DashboardScreen extends StatelessWidget {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(32),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PageTitle(
             context.t('myServers'),
@@ -125,13 +125,15 @@ class DashboardScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
           ],
-          Row(
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 16,
+            runSpacing: 12,
             children: [
-              Expanded(
-                child: Text(
-                  '${context.t('myServers')}  ·  ${controller.profiles.length}',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
+              Text(
+                '${context.t('myServers')}  ·  ${controller.profiles.length}',
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               StatusChip(context.t('heroTag'), active: true),
             ],

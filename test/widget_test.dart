@@ -48,7 +48,7 @@ void main() {
     });
   }
   testWidgets('English and large text remain readable', (tester) async {
-    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    tester.platformDispatcher.textScaleFactorTestValue = 2.0;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     tester.view.physicalSize = const Size(1050, 850);
     tester.view.devicePixelRatio = 1;

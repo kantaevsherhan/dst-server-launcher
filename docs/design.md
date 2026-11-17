@@ -2,7 +2,7 @@
 
 An expedition desk, not a dense admin dashboard. First run offers one obvious primary action: create a world.
 Warm graphite #111716, panel #1B2421, ink #EEF5EE, moss #83C76D, amber #E3B46C.
-Semantic Material color scheme supports dark and light modes. Inter for UI, Outfit for headings, both bundled
+Semantic Material color scheme supports dark and light modes. Inter for UI, Manrope for headings, both bundled
 under OFL so startup works offline. 4/8 spacing grid, 8px inputs, 12px panels, 16px hero.
 
 Original forest artwork is bundled at `assets/images/expedition.png`. Generated with the built-in image generation tool.
