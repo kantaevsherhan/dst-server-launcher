@@ -55,7 +55,9 @@ void main() {
       await tester.pumpAndSettle();
       await expectLater(
         find.byKey(key),
-        matchesGoldenFile('../docs/screenshots/dashboard-${width.toInt()}.png'),
+        matchesGoldenFile(
+          '../../docs/screenshots/dashboard-${width.toInt()}.png',
+        ),
       );
       await tester.tap(find.text('Создать сервер'));
       await tester.pumpAndSettle();
@@ -68,7 +70,7 @@ void main() {
       await tester.pumpAndSettle();
       await expectLater(
         find.byKey(key),
-        matchesGoldenFile('../docs/screenshots/wizard-${width.toInt()}.png'),
+        matchesGoldenFile('../../docs/screenshots/wizard-${width.toInt()}.png'),
       );
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
