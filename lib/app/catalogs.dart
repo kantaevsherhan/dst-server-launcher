@@ -226,6 +226,7 @@ const catalogs = <String, Map<String, String>>{
     "documentationUrl":
         "https://github.com/kantaevsherhan/dst-server-launcher#readme",
     "commandPreview": "Предпросмотр",
+    "importedModsHelp": "Импортированные modoverrides.lua сохраняются без изменений, включая ручные параметры. Управляйте ими через файлы; для настройки модов в GUI создайте новый профиль.",
   },
   "en": {
     "@@locale": "en",
@@ -452,5 +453,6 @@ const catalogs = <String, Map<String, String>>{
     "documentationUrl":
         "https://github.com/kantaevsherhan/dst-server-launcher#readme",
     "commandPreview": "Preview",
+    "importedModsHelp": "Imported modoverrides.lua files and custom options are preserved unchanged. Manage them through Files, or create a new profile for GUI-managed mods.",
   },
 };

@@ -150,4 +150,13 @@ void main() {
     );
     expect(spawned, isEmpty);
   });
+  test(
+    'Start is blocked while a backup or restore holds the profile',
+    () async {
+      supervisor.maintenance.add(profile.id);
+      await expectLater(supervisor.start(profile), throwsStateError);
+      expect(spawned, isEmpty);
+      supervisor.maintenance.clear();
+    },
+  );
 }

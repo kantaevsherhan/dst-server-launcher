@@ -288,7 +288,10 @@ class _ServerDetailScreenState extends State<ServerDetailScreen> {
             ),
             2 => ModEditor(
               mods: profile.mods,
-              locked: active,
+              locked: active || !profile.manageMods,
+              lockMessage: profile.manageMods
+                  ? 'stopFirst'
+                  : 'importedModsHelp',
               onChanged: (mods) => c.updateMods(profile, mods),
             ),
             3 => InlineHelp(context.t('playersUnknown')),

@@ -176,4 +176,36 @@ void main() {
       isNull,
     );
   });
+  test('A running profile cannot be archived', () async {
+    await repo.create(profile, 'testKleiToken');
+    final backups = ZipBackupService(repo.appDir, active: (_) => true);
+    await expectLater(backups.create(profile), throwsStateError);
+    expect(await backups.list(profile), isEmpty);
+  });
+  test(
+    'Imported manual mod overrides are never overwritten on launch',
+    () async {
+      await repo.create(profile, 'testKleiToken');
+      final imported = ServerProfile.fromJson({
+        ...profile.toJson(),
+        'manageMods': false,
+      });
+      final file = File(
+        p.join(clusterDirectory(profile), 'Master', 'modoverrides.lua'),
+      );
+      await file.writeAsString(
+        'return { ["workshop-123"] = { enabled = true, configuration_options = { custom = 7 } } }',
+      );
+      await repo.syncMods(imported);
+      expect(await file.readAsString(), contains('custom = 7'));
+    },
+  );
+  test('Import rejects destination nested inside the source', () async {
+    await repo.create(profile, 'testKleiToken');
+    final source = clusterDirectory(profile);
+    await expectLater(
+      repo.importCluster(source, profile.installDir, source, 34000),
+      throwsA(isA<FileSystemException>()),
+    );
+  });
 }

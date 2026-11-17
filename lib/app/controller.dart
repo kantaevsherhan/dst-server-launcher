@@ -13,14 +13,17 @@ import '../domain/models.dart';
 
 class LauncherController extends ChangeNotifier {
   LauncherController(this.repository, this.preferences)
-    : supervisor = ProcessSupervisor(repository),
-      backups = ZipBackupService(repository.appDir) {
+    : supervisor = ProcessSupervisor(repository) {
     supervisor.addListener(notifyListeners);
   }
   final LocalProfileRepository repository;
   final SharedPreferences preferences;
   final ProcessSupervisor supervisor;
-  final ZipBackupService backups;
+  late final ZipBackupService backups = ZipBackupService(
+    repository.appDir,
+    active: supervisor.active,
+    maintenance: supervisor.maintenance,
+  );
   final workshop = SteamWorkshopRepository();
   final locator = LocalSteamLocator();
   List<ServerProfile> profiles = [];
@@ -97,6 +100,11 @@ class LauncherController extends ChangeNotifier {
   }
 
   Future<void> updateMods(ServerProfile profile, List<ModSpec> mods) async {
+    if (!profile.manageMods || supervisor.maintenance.contains(profile.id)) {
+      throw StateError(
+        'Imported mod configuration is preserved; use manual files or create a GUI-managed profile',
+      );
+    }
     if (supervisor.active(profile)) {
       throw StateError('Stop both shards before changing mods');
     }

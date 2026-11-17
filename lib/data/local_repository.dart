@@ -115,6 +115,7 @@ class LocalProfileRepository implements ClusterConfigRepository {
   }
 
   Future<void> syncMods(ServerProfile profile) async {
+    if (!profile.manageMods) return;
     for (final entry
         in generator
             .generate(profile)
@@ -160,6 +161,7 @@ class LocalProfileRepository implements ClusterConfigRepository {
       multiLine: true,
     ).firstMatch(ini)?[1]?.trim();
     final profile = ServerProfile(
+      manageMods: false,
       id: ServerProfile.newId(),
       name: value('cluster_name') ?? p.basename(source),
       description: value('cluster_description') ?? '',
@@ -174,6 +176,18 @@ class LocalProfileRepository implements ClusterConfigRepository {
     );
     profile.validate();
     final target = Directory(clusterDirectory(profile));
+    await target.parent.create(recursive: true);
+    final canonicalSource = await dir.resolveSymbolicLinks();
+    final canonicalTarget = p.join(
+      await target.parent.resolveSymbolicLinks(),
+      p.basename(target.path),
+    );
+    if (p.equals(canonicalSource, canonicalTarget) ||
+        p.isWithin(canonicalSource, canonicalTarget)) {
+      throw const FileSystemException(
+        'Choose a storage root outside the imported cluster',
+      );
+    }
     await target.create(recursive: true);
     // Preserve saves and custom overrides; reject symlinks, never mutate source.
     await for (final entity in dir.list(recursive: true, followLinks: false)) {
@@ -205,12 +219,35 @@ class LocalProfileRepository implements ClusterConfigRepository {
 }
 
 class ZipBackupService implements BackupService {
-  ZipBackupService(this.root);
+  ZipBackupService(
+    this.root, {
+    bool Function(ServerProfile)? active,
+    Set<String>? maintenance,
+  }) : active = active ?? ((_) => false),
+       maintenance = maintenance ?? <String>{};
   final Directory root;
+  final bool Function(ServerProfile) active;
+  final Set<String> maintenance;
+  Future<T> _stopped<T>(
+    ServerProfile profile,
+    Future<T> Function() task,
+  ) async {
+    if (active(profile) || !maintenance.add(profile.id)) {
+      throw StateError('Stop both shards and wait for the current operation');
+    }
+    try {
+      return await task();
+    } finally {
+      maintenance.remove(profile.id);
+    }
+  }
+
   Directory _dir(ServerProfile profile) =>
       Directory(p.join(root.path, 'backups', profile.id));
   @override
-  Future<String> create(ServerProfile profile) async {
+  Future<String> create(ServerProfile profile) =>
+      _stopped(profile, () => _create(profile));
+  Future<String> _create(ServerProfile profile) async {
     final archive = Archive();
     final cluster = Directory(clusterDirectory(profile));
     await for (final entity in cluster.list(
@@ -321,10 +358,12 @@ class ZipBackupService implements BackupService {
           .map((e) => e.name)
           .toList();
   @override
-  Future<void> restore(ServerProfile profile, String file) async {
+  Future<void> restore(ServerProfile profile, String file) =>
+      _stopped(profile, () => _restore(profile, file));
+  Future<void> _restore(ServerProfile profile, String file) async {
     final archive = await _read(file);
     // Validate fully before making the safety snapshot or changing any data.
-    await create(profile);
+    await _create(profile);
     final current = Directory(clusterDirectory(profile));
     final stage = Directory(
       '${current.path}.restore_${DateTime.now().microsecondsSinceEpoch}',

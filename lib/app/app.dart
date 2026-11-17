@@ -185,6 +185,7 @@ class _LauncherShellState extends State<LauncherShell> with WindowListener {
           children: [
             if (widget.windowControls)
               Container(
+                height: 40,
                 color: scheme.surfaceContainer,
                 child: WindowCaption(
                   brightness: Theme.of(context).brightness,

@@ -219,5 +219,6 @@
   "modCount": "Модов",
   "worldSummary": "Настройки мира",
   "documentationUrl": "https://github.com/kantaevsherhan/dst-server-launcher#readme",
-  "commandPreview": "Предпросмотр"
+  "commandPreview": "Предпросмотр",
+  "importedModsHelp": "Импортированные modoverrides.lua сохраняются без изменений, включая ручные параметры. Управляйте ими через файлы; для настройки модов в GUI создайте новый профиль."
 }

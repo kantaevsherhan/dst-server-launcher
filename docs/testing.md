@@ -28,3 +28,5 @@ CGNAT traversal, real Workshop gameplay compatibility or all distro runtime comb
 - The local Windows native debug integration test compiled but Windows Application Control blocked execution. No security settings were changed. Native smoke tests are also configured on clean CI hosts.
 - Valve GetPublishedFileDetails returned result=1, title Global Positions and consumer_app_id=322330 for public Workshop ID 378160973.
 - Actual DST gameplay/Klei login and internet joining remain unverified; no real token was requested, stored or published during development.
+
+Final safety regressions cover start/backup exclusion, active-profile snapshot rejection, imported Lua preservation and nested import destinations. Native CI discovered an unbounded titlebar height; the area is now constrained to 40 logical pixels.

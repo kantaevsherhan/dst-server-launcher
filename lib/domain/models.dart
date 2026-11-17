@@ -58,6 +58,7 @@ class ServerProfile {
     this.pause = true,
     this.worldSize = 'default',
     this.mods = const [],
+    this.manageMods = true,
   });
   final String id,
       name,
@@ -69,7 +70,7 @@ class ServerProfile {
       worldSize,
       secret;
   final int slots, portBase;
-  final bool caves, pvp, pause;
+  final bool caves, pvp, pause, manageMods;
   final List<ModSpec> mods;
   List<String> get shards => ['Master', if (caves) 'Caves'];
   List<int> get ports => [
@@ -115,6 +116,7 @@ class ServerProfile {
     'name': name,
     'description': description,
     'password': password,
+    'manageMods': manageMods,
     'installDir': installDir,
     'storageRoot': storageRoot,
     'secret': secret,
@@ -129,6 +131,7 @@ class ServerProfile {
   };
   factory ServerProfile.fromJson(Map<String, dynamic> j) => ServerProfile(
     id: j['id'],
+    manageMods: j['manageMods'] ?? true,
     name: j['name'],
     description: j['description'] ?? '',
     password: j['password'] ?? '',

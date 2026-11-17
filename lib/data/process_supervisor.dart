@@ -42,6 +42,7 @@ class ProcessSupervisor extends ChangeNotifier implements DstProcessController {
   final Map<String, List<LogLine>> logs = {};
   final Map<String, List<String>> _secrets = {};
   final Set<String> _locked = {};
+  final Set<String> maintenance = {};
   final Map<String, Timer> _readinessTimers = {};
   final Map<String, Future<void>> _logQueues = {};
   bool _disposed = false;
@@ -60,14 +61,16 @@ class ProcessSupervisor extends ChangeNotifier implements DstProcessController {
     super.dispose();
   }
 
-  bool active(ServerProfile profile) => profile.shards.any(
-    (s) => [
-      ShardState.starting,
-      ShardState.running,
-      ShardState.stopping,
-      ShardState.attention,
-    ].contains(state(profile, s)),
-  );
+  bool active(ServerProfile profile) =>
+      _locked.contains(profile.id) ||
+      profile.shards.any(
+        (s) => [
+          ShardState.starting,
+          ShardState.running,
+          ShardState.stopping,
+          ShardState.attention,
+        ].contains(state(profile, s)),
+      );
   ShardState state(ServerProfile profile, String shard) =>
       states['${profile.id}/$shard'] ?? ShardState.stopped;
   String redact(String id, String message) {
@@ -124,6 +127,9 @@ class ProcessSupervisor extends ChangeNotifier implements DstProcessController {
   ];
   @override
   Future<void> start(ServerProfile profile) async {
+    if (maintenance.contains(profile.id)) {
+      throw StateError('A backup or restore is in progress');
+    }
     if (active(profile) || !_locked.add(profile.id)) {
       throw StateError('Server is already active');
     }

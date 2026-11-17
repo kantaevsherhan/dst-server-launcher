@@ -22,7 +22,7 @@ The wizard produces a new UUID-like safe cluster ID, independent of the display 
 then renamed as a directory. Profile registry uses a recoverable `.previous` journal. Existing clusters are never
 overwritten during creation. Import copies a stopped cluster; saves/world overrides are preserved, new ports
 and identity are assigned, source directory remains unchanged. Workshop settings imported from external Lua
-are not evaluated; review and re-add mods in GUI before launching an imported modded cluster.
+are not evaluated; imported modoverrides files and their custom options remain manually managed and are never overwritten by the launcher. Ensure the corresponding server installation has the required Workshop downloads configured before launching.
 
 Processes use `Process.start(executable, args, workingDirectory: bin64, runInShell: false)` and official
 `-persistent_storage_root`, `-conf_dir`, `-cluster`, `-shard`, `-console`, `-monitor_parent_process` flags.

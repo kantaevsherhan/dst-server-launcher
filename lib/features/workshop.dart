@@ -45,10 +45,14 @@ class WorkshopScreen extends StatelessWidget {
                     onChanged: (mods) => context
                         .read<LauncherController>()
                         .updateMods(profile, mods),
-                    locked: context
-                        .read<LauncherController>()
-                        .supervisor
-                        .active(profile),
+                    lockMessage: profile.manageMods
+                        ? 'stopFirst'
+                        : 'importedModsHelp',
+                    locked:
+                        !profile.manageMods ||
+                        context.read<LauncherController>().supervisor.active(
+                          profile,
+                        ),
                   ),
                 ],
               ),
@@ -66,11 +70,13 @@ class ModEditor extends StatefulWidget {
     required this.mods,
     required this.onChanged,
     this.locked = false,
+    this.lockMessage = 'stopFirst',
     super.key,
   });
   final List<ModSpec> mods;
   final Future<void> Function(List<ModSpec>) onChanged;
   final bool locked;
+  final String lockMessage;
   @override
   State<ModEditor> createState() => _ModEditorState();
 }
@@ -104,7 +110,9 @@ class _ModEditorState extends State<ModEditor> {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      InlineHelp(context.t(widget.locked ? 'stopFirst' : 'modDownloadNote')),
+      InlineHelp(
+        context.t(widget.locked ? widget.lockMessage : 'modDownloadNote'),
+      ),
       const SizedBox(height: 16),
       TextField(
         controller: input,
