@@ -35,6 +35,16 @@ void main() {
     expect(profile.ports.toSet().length, profile.ports.length);
     expect(files.keys.any((v) => v.contains('token')), isFalse);
   });
+  test('Large UI size uses the actual engine identifier default', () {
+    final profile = ServerProfile.fromJson({
+      ...fixture().toJson(),
+      'worldSize': 'large',
+    });
+    expect(
+      ClusterConfigGenerator().generate(profile)['Master/worldgenoverride.lua'],
+      contains('world_size = "default"'),
+    );
+  });
   test('No caves means one shard and no Caves files', () {
     final files = ClusterConfigGenerator().generate(fixture(caves: false));
     expect(files.keys.any((v) => v.startsWith('Caves/')), isFalse);

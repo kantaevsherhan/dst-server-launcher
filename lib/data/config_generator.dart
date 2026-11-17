@@ -49,7 +49,7 @@ authentication_port = ${p.portBase + (master ? 3 : 5)}
           '''return {
   override_enabled = true,
   preset = "${master ? 'SURVIVAL_TOGETHER' : 'DST_CAVE'}",
-  overrides = { world_size = "${p.worldSize}" },
+  overrides = { world_size = "${p.worldSize == 'large' ? 'default' : p.worldSize}" },
 }
 ''';
       result['$shard/modoverrides.lua'] =

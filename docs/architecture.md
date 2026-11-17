@@ -40,3 +40,5 @@ started external server processes; stop such processes before import/backup/rest
 
 No cloud API, Docker, DRM files, sudo execution, permanent service, hidden autostart or UPnP is included.
 Events: ChangeNotifier delivers profile/install/process/log changes. No telemetry is sent.
+
+World size UI value large is an explicit alias for the engine value default (Large). Only small/medium/default/huge are emitted, following the Klei-hosted worldgen reference: https://kleiforums.com/forums/topic/127830-worldgenoverridelua-settings-for-march-qol-update/
