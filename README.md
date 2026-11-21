@@ -3,7 +3,7 @@
 Независимый desktop-лаунчер для официального **Don't Starve Together Dedicated Server**.
 Windows 10/11 x64 и Linux Desktop x64. Русский / English, тёмная / светлая тема.
 
-![Главный экран](docs/screenshots/dashboard-1440.png)
+![Главный экран](docs/screenshots/dashboard-dark.png)
 
 ## Скачать
 

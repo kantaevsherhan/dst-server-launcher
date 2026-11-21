@@ -6,6 +6,16 @@ enum PhosphorIconsStyle { regular, bold }
 
 @staticIconProvider
 abstract final class PhosphorIcons {
+  static const windowsLogo = IconData(
+    0xe692,
+    fontFamily: 'PhosphorRegular',
+    fontPackage: 'phosphor_flutter',
+  );
+  static const linuxLogo = IconData(
+    0xeb02,
+    fontFamily: 'PhosphorRegular',
+    fontPackage: 'phosphor_flutter',
+  );
   static IconData archive([
     PhosphorIconsStyle style = PhosphorIconsStyle.regular,
   ]) => style == PhosphorIconsStyle.bold

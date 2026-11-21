@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dst_server_launcher/app/app.dart';
 import 'package:dst_server_launcher/domain/models.dart';
+import 'package:dst_server_launcher/core/icons.dart';
 import 'package:dst_server_launcher/app/controller.dart';
 import 'package:dst_server_launcher/data/local_repository.dart';
 
@@ -29,10 +30,15 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Мастер установки сервера'), findsOneWidget);
+      expect(c.themeMode, ThemeMode.dark);
+      expect(find.byIcon(PhosphorIcons.windowsLogo), findsOneWidget);
+      expect(find.byIcon(PhosphorIcons.linuxLogo), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('Создать сервер'));
       await tester.pumpAndSettle();
       expect(find.text('Параметры установки'), findsOneWidget);
+      expect(find.byIcon(PhosphorIcons.windowsLogo), findsOneWidget);
+      expect(find.byIcon(PhosphorIcons.linuxLogo), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('Далее'));
       await tester.pumpAndSettle();
@@ -156,6 +162,7 @@ void main() {
     await tester.pumpWidget(LauncherApp(controller: c, windowControls: false));
     await tester.pumpAndSettle();
     expect(find.text('Server setup wizard'), findsOneWidget);
+    expect(c.themeMode, ThemeMode.light);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     c.supervisor.dispose();

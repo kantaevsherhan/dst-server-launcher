@@ -44,9 +44,9 @@ class LauncherController extends ChangeNotifier {
   }
 
   String get language => preferences.getString('language') ?? 'ru';
-  ThemeMode get themeMode => preferences.getString('theme') == 'dark'
-      ? ThemeMode.dark
-      : ThemeMode.light;
+  ThemeMode get themeMode => preferences.getString('theme') == 'light'
+      ? ThemeMode.light
+      : ThemeMode.dark;
   String get storageRoot =>
       preferences.getString('storageRoot') ??
       p.join(repository.appDir.path, 'Klei');

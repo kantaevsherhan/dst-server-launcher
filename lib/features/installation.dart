@@ -42,7 +42,22 @@ class TargetSystemPicker extends StatelessWidget {
         selectedIcon: Icon(PhosphorIcons.check(), size: 16),
         segments: [
           for (final os in TargetPlatformOS.values)
-            ButtonSegment(value: os, label: Text(os.label)),
+            ButtonSegment(
+              value: os,
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    os == TargetPlatformOS.windows
+                        ? PhosphorIcons.windowsLogo
+                        : PhosphorIcons.linuxLogo,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(os.label),
+                ],
+              ),
+            ),
         ],
         selected: {controller.targetSystem},
         onSelectionChanged: (values) =>
