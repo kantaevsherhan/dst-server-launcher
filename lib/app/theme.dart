@@ -1,35 +1,44 @@
 import 'package:flutter/material.dart';
 
 abstract final class Tokens {
-  static const background = Color(0xff292d2a);
-  static const panel = Color(0xff333933);
-  static const raised = Color(0xff41483f);
-  static const green = Color(0xffb4c6a8);
-  static const amber = Color(0xffe3b46c);
-  static const ink = Color(0xfff6f1e8);
-  static const muted = Color(0xffc8cabe);
-  static const line = Color(0xff738173);
-  static const danger = Color(0xffffb4ab);
+  static const parchment = Color(0xfff4eedf);
+  static const paper = Color(0xffeae2d2);
+  static const ink = Color(0xff333338);
+  static const slate = Color(0xff52626e);
+  static const mist = Color(0xffd8dfe0);
+  static const burgundy = Color(0xff794d50);
+  static const rose = Color(0xffd6a5a2);
+  static const sage = Color(0xff5b6955);
+  static const night = Color(0xff30343a);
   static const radius = 6.0;
-  static const gap = 24.0;
 }
 
 ThemeData launcherTheme(Brightness brightness) {
   final dark = brightness == Brightness.dark;
   final scheme =
       ColorScheme.fromSeed(
-        seedColor: Tokens.green,
+        seedColor: Tokens.burgundy,
         brightness: brightness,
       ).copyWith(
-        primary: dark ? Tokens.green : const Color(0xff506954),
-        onPrimary: dark ? Tokens.background : Colors.white,
-        surface: dark ? Tokens.background : const Color(0xfffbf8f0),
-        onSurface: dark ? Tokens.ink : const Color(0xff343b34),
-        onSurfaceVariant: dark ? Tokens.muted : const Color(0xff586357),
-        surfaceContainer: dark ? Tokens.panel : const Color(0xfff3efe5),
-        surfaceContainerHighest: dark ? Tokens.raised : const Color(0xffe4eadb),
-        outline: dark ? Tokens.line : const Color(0xff76806f),
-        error: dark ? Tokens.danger : const Color(0xffa32f28),
+        primary: dark ? Tokens.rose : Tokens.burgundy,
+        onPrimary: dark ? Tokens.ink : Colors.white,
+        primaryContainer: dark
+            ? const Color(0xff62464a)
+            : const Color(0xffeedbd5),
+        onPrimaryContainer: dark ? Tokens.parchment : Tokens.ink,
+        secondary: dark ? const Color(0xffb0c3cf) : Tokens.slate,
+        secondaryContainer: dark ? const Color(0xff485662) : Tokens.mist,
+        onSecondaryContainer: dark ? Tokens.parchment : Tokens.ink,
+        tertiary: dark ? const Color(0xffb4c3a6) : Tokens.sage,
+        surface: dark ? Tokens.night : Tokens.parchment,
+        onSurface: dark ? Tokens.parchment : Tokens.ink,
+        onSurfaceVariant: dark
+            ? const Color(0xffd2cec6)
+            : const Color(0xff55565b),
+        surfaceContainer: dark ? const Color(0xff393d43) : Tokens.paper,
+        surfaceContainerHighest: dark ? const Color(0xff48545d) : Tokens.mist,
+        outline: dark ? const Color(0xff92999d) : const Color(0xff73716e),
+        error: dark ? const Color(0xffffb4ac) : const Color(0xff963e37),
       );
   final base = ThemeData(
     useMaterial3: true,
@@ -51,21 +60,62 @@ ThemeData launcherTheme(Brightness brightness) {
     fontSize: 20,
     height: 1.15,
   );
+  ButtonStyle feedback(ButtonStyle style, Color ink) => style.copyWith(
+    animationDuration: const Duration(milliseconds: 140),
+    overlayColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.disabled)) return null;
+      if (states.contains(WidgetState.pressed)) {
+        return ink.withValues(alpha: .22);
+      }
+      if (states.contains(WidgetState.focused)) {
+        return ink.withValues(alpha: .18);
+      }
+      if (states.contains(WidgetState.hovered)) {
+        return ink.withValues(alpha: .10);
+      }
+      return null;
+    }),
+    foregroundBuilder: (context, states, child) {
+      final reduced = MediaQuery.disableAnimationsOf(context);
+      final down = states.contains(WidgetState.pressed);
+      final over = states.contains(WidgetState.hovered);
+      return AnimatedScale(
+        scale: reduced || states.contains(WidgetState.disabled)
+            ? 1
+            : down
+            ? .96
+            : over
+            ? 1.035
+            : 1,
+        duration: reduced
+            ? Duration.zero
+            : Duration(milliseconds: down ? 65 : 140),
+        curve: Curves.easeOutCubic,
+        child: child,
+      );
+    },
+  );
   return base.copyWith(
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        shape: paperEdge,
-        minimumSize: const Size(48, 48),
-        textStyle: buttonType,
+      style: feedback(
+        TextButton.styleFrom(
+          shape: paperEdge,
+          minimumSize: const Size(48, 48),
+          textStyle: buttonType,
+        ),
+        scheme.onSurface,
       ),
     ),
     segmentedButtonTheme: SegmentedButtonThemeData(
-      style: SegmentedButton.styleFrom(
-        shape: paperEdge,
-        textStyle: buttonType,
-        minimumSize: const Size(56, 48),
-        selectedBackgroundColor: scheme.surfaceContainerHighest,
-        selectedForegroundColor: scheme.onSurface,
+      style: feedback(
+        SegmentedButton.styleFrom(
+          shape: paperEdge,
+          textStyle: buttonType,
+          minimumSize: const Size(56, 48),
+          selectedBackgroundColor: scheme.surfaceContainerHighest,
+          selectedForegroundColor: scheme.onSurface,
+        ),
+        scheme.onSurface,
       ),
     ),
     chipTheme: base.chipTheme.copyWith(
@@ -138,25 +188,34 @@ ThemeData launcherTheme(Brightness brightness) {
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        minimumSize: const Size(48, 48),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        shape: paperEdge,
-        side: BorderSide(color: scheme.onSurface, width: 1.5),
-        textStyle: buttonType,
+      style: feedback(
+        FilledButton.styleFrom(
+          minimumSize: const Size(48, 48),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: paperEdge,
+          side: BorderSide(color: scheme.onSurface, width: 1.5),
+          textStyle: buttonType,
+        ),
+        scheme.onPrimary,
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size(48, 48),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        shape: paperEdge,
-        textStyle: buttonType,
-        side: BorderSide(color: scheme.outline, width: 1.5),
+      style: feedback(
+        OutlinedButton.styleFrom(
+          minimumSize: const Size(48, 48),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          shape: paperEdge,
+          textStyle: buttonType,
+          side: BorderSide(color: scheme.outline, width: 1.5),
+        ),
+        scheme.primary,
       ),
     ),
     iconButtonTheme: IconButtonThemeData(
-      style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
+      style: feedback(
+        IconButton.styleFrom(minimumSize: const Size(48, 48)),
+        scheme.primary,
+      ),
     ),
     navigationRailTheme: NavigationRailThemeData(
       backgroundColor: scheme.surfaceContainer,

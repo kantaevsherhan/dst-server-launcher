@@ -175,7 +175,7 @@ class StatusChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: active
-            ? scheme.primary.withValues(alpha: .12)
+            ? scheme.tertiary.withValues(alpha: .12)
             : scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(24),
       ),
@@ -185,7 +185,7 @@ class StatusChip extends StatelessWidget {
           Icon(
             active ? PhosphorIcons.checkCircle() : PhosphorIcons.circleDashed(),
             size: 14,
-            color: active ? scheme.primary : scheme.onSurfaceVariant,
+            color: active ? scheme.tertiary : scheme.onSurfaceVariant,
           ),
           const SizedBox(width: 6),
           Flexible(
@@ -193,7 +193,7 @@ class StatusChip extends StatelessWidget {
               text,
               style: TextStyle(
                 fontSize: 12,
-                color: active ? scheme.primary : scheme.onSurfaceVariant,
+                color: active ? scheme.tertiary : scheme.onSurfaceVariant,
               ),
             ),
           ),

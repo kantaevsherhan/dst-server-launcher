@@ -7,6 +7,7 @@ import '../app/controller.dart';
 import '../app/strings.dart';
 import '../core/widgets.dart';
 import 'installation.dart';
+import 'woodland_atmosphere.dart';
 import '../domain/models.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -66,6 +67,7 @@ class DashboardScreen extends StatelessWidget {
                                   ],
                                 ),
                               ),
+                              const WoodlandAtmosphere(),
                             ],
                           ),
                         ),
