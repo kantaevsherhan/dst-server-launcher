@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dst_server_launcher/app/app.dart';
+import 'package:dst_server_launcher/core/ink_frame.dart';
 import 'package:dst_server_launcher/app/controller.dart';
 import 'package:dst_server_launcher/data/local_repository.dart';
 
@@ -85,5 +86,46 @@ void main() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
     });
+  }
+  const exportDir = String.fromEnvironment('ART_EXPORT_DIR');
+  if (exportDir.isNotEmpty) {
+    for (final name in ['mask', 'expedition', 'workshop']) {
+      testWidgets('Export transparent frame layer for $name', (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(2172, 724);
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final key = GlobalKey();
+        await tester.pumpWidget(
+          RepaintBoundary(
+            key: key,
+            child: name == 'mask'
+                ? const ClipPath(
+                    clipper: InkFrameClipper(),
+                    child: ColoredBox(color: Colors.white),
+                  )
+                : InkFrame(
+                    child: Image.asset(
+                      'assets/images/$name.png',
+                      fit: BoxFit.fill,
+                    ),
+                  ),
+          ),
+        );
+        if (name != 'mask') {
+          await tester.runAsync(
+            () => precacheImage(
+              AssetImage('assets/images/$name.png'),
+              key.currentContext!,
+            ),
+          );
+        }
+        await tester.pumpAndSettle();
+        await expectLater(
+          find.byKey(key),
+          matchesGoldenFile(Uri.file('$exportDir/$name.png')),
+        );
+      });
+    }
   }
 }

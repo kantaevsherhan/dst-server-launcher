@@ -9,3 +9,5 @@ The wizard keeps Back and Next in a fixed footer and scrolls the form separately
 Test-rendered welcome and wizard screenshots are stored in `docs/screenshots/`.
 
 The forest plays a brief mist and firefly animation on entry and pointer re-entry. Button labels respond to hover and press while the hit target stays fixed. Reduced motion keeps the scene still and preserves immediate color feedback.
+
+Both panoramas share a responsive alpha mask with clipped corners, an irregular ink edge and hooked branches. The illustration export can render the plain mask and both framed backgrounds at 2172 × 724 from the same Flutter geometry.

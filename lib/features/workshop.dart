@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/icons.dart';
+import '../core/ink_frame.dart';
 import '../app/controller.dart';
 import '../app/strings.dart';
 import '../core/widgets.dart';
@@ -15,13 +16,19 @@ class WorkshopScreen extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          height: 164,
-          width: double.infinity,
-          child: Image.asset(
-            'assets/images/workshop.png',
-            fit: BoxFit.cover,
-            excludeFromSemantics: true,
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1152),
+            child: AspectRatio(
+              aspectRatio: 3,
+              child: InkFrame(
+                child: Image.asset(
+                  'assets/images/workshop.png',
+                  fit: BoxFit.cover,
+                  excludeFromSemantics: true,
+                ),
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 16),

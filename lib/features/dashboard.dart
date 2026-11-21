@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../core/icons.dart';
+import '../core/ink_frame.dart';
 import '../app/controller.dart';
 import '../app/strings.dart';
 import '../core/widgets.dart';
@@ -48,27 +49,29 @@ class DashboardScreen extends StatelessWidget {
                       ExcludeSemantics(
                         child: AspectRatio(
                           aspectRatio: 3,
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              Image.asset(
-                                'assets/images/expedition.png',
-                                fit: BoxFit.cover,
-                              ),
-                              const FractionallySizedBox(
-                                alignment: Alignment(.08, .65),
-                                heightFactor: .83,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    _Survivor('wilson'),
-                                    SizedBox(width: 16),
-                                    _Survivor('willow'),
-                                  ],
+                          child: InkFrame(
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Image.asset(
+                                  'assets/images/expedition.png',
+                                  fit: BoxFit.cover,
                                 ),
-                              ),
-                              const WoodlandAtmosphere(),
-                            ],
+                                const FractionallySizedBox(
+                                  alignment: Alignment(.08, .65),
+                                  heightFactor: .83,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      _Survivor('wilson'),
+                                      SizedBox(width: 16),
+                                      _Survivor('willow'),
+                                    ],
+                                  ),
+                                ),
+                                const WoodlandAtmosphere(),
+                              ],
+                            ),
                           ),
                         ),
                       ),
