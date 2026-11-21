@@ -173,6 +173,8 @@ class LocalProfileRepository implements ClusterConfigRepository {
       slots: int.tryParse(value('max_players') ?? '') ?? 6,
       caves: await Directory(p.join(source, 'Caves')).exists(),
       mode: value('game_mode') ?? 'survival',
+      pvp: value('pvp')?.toLowerCase() == 'true',
+      pause: value('pause_when_empty')?.toLowerCase() != 'false',
     );
     profile.validate();
     final target = Directory(clusterDirectory(profile));

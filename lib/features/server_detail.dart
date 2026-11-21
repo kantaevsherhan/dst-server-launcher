@@ -387,6 +387,18 @@ class _ServerDetailScreenState extends State<ServerDetailScreen> {
     );
   }
 
+  String _backupLabel(String file) {
+    final timestamp = int.tryParse(p.basenameWithoutExtension(file));
+    if (timestamp == null || timestamp < 0 || timestamp > 8640000000000000000) {
+      return p.basename(file);
+    }
+    return DateTime.fromMicrosecondsSinceEpoch(timestamp)
+        .toLocal()
+        .toString()
+        .split('.')
+        .first;
+  }
+
   Widget _backups(
     LauncherController c,
     ServerProfile profile,
@@ -429,13 +441,7 @@ class _ServerDetailScreenState extends State<ServerDetailScreen> {
                             color: Theme.of(context).colorScheme.primary,
                           ),
                           const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              DateTime.fromMicrosecondsSinceEpoch(
-                                int.parse(p.basenameWithoutExtension(file)),
-                              ).toLocal().toString().split('.').first,
-                            ),
-                          ),
+                          Expanded(child: Text(_backupLabel(file))),
                           const SizedBox(width: 12),
                           OutlinedButton(
                             onPressed: active || busy

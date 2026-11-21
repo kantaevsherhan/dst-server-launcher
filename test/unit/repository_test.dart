@@ -200,6 +200,33 @@ void main() {
       expect(await file.readAsString(), contains('custom = 7'));
     },
   );
+  test('Import copies saves and keeps PvP and pause settings', () async {
+    final original = ServerProfile.fromJson({
+      ...profile.toJson(),
+      'pvp': true,
+      'pause': false,
+    });
+    await repo.create(original, 'fixture-token');
+    final source = clusterDirectory(original);
+    final save = File(p.join(source, 'Master', 'save', 'world'));
+    await save.parent.create(recursive: true);
+    await save.writeAsString('world fixture');
+    final copy = await repo.importCluster(
+      source,
+      profile.installDir,
+      p.join(temp.path, 'copy'),
+      34000,
+    );
+    expect(copy.pvp, isTrue);
+    expect(copy.pause, isFalse);
+    expect(copy.id, isNot(original.id));
+    expect(
+      await File(p.join(clusterDirectory(copy), 'Master', 'save', 'world'))
+          .readAsString(),
+      'world fixture',
+    );
+    expect(await save.readAsString(), 'world fixture');
+  });
   test('Import rejects destination nested inside the source', () async {
     await repo.create(profile, 'testKleiToken');
     final source = clusterDirectory(profile);

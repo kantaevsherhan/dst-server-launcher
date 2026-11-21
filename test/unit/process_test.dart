@@ -117,6 +117,38 @@ void main() {
       isTrue,
     );
   });
+  test('A slow shard can confirm readiness after the timeout', () async {
+    supervisor.dispose();
+    supervisor = ProcessSupervisor(
+      repo,
+      readyTimeout: const Duration(milliseconds: 10),
+      spawn: (_, _, _) async {
+        final fake = FakeDstProcess();
+        spawned.add(fake);
+        return fake;
+      },
+    );
+    await supervisor.start(profile);
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+    expect(supervisor.state(profile, 'Master'), ShardState.attention);
+    spawned.first.line('Server registered');
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    expect(supervisor.state(profile, 'Master'), ShardState.running);
+  });
+  test('Save and restart operate on both owned shards', () async {
+    await supervisor.start(profile);
+    await supervisor.saveWorld(profile);
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    expect(
+      spawned.every((p) => p.commands.any((s) => s.contains('c_save()'))),
+      isTrue,
+    );
+    expect(await supervisor.stop(profile), isTrue);
+    await supervisor.start(profile);
+    expect(spawned.length, 4);
+    expect(supervisor.active(profile), isTrue);
+  });
+
   test('Crash is not reported as running', () async {
     await supervisor.start(profile);
     spawned.first.exit(1);

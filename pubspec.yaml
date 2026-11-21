@@ -1,7 +1,7 @@
 name: dst_server_launcher
 description: Independent desktop manager for the official Don't Starve Together Dedicated Server.
 publish_to: none
-version: 0.1.0+1
+version: 0.2.0+2
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
@@ -33,6 +33,9 @@ flutter:
     - assets/images/
     - l10n/
   fonts:
+    - family: Neucha
+      fonts:
+        - asset: assets/fonts/Neucha.ttf
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter.ttf

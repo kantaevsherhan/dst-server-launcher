@@ -17,7 +17,7 @@ Future<void> main() async {
   }
   await windowManager.ensureInitialized();
   const options = WindowOptions(
-    size: Size(1380, 900),
+    size: Size(1100, 780),
     minimumSize: Size(900, 650),
     center: true,
     title: 'DST Server Launcher',

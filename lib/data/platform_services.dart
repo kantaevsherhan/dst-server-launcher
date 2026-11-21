@@ -5,6 +5,15 @@ import 'package:path/path.dart' as path;
 import '../domain/models.dart';
 import '../domain/services.dart';
 
+enum TargetPlatformOS {
+  windows('Windows'),
+  linux('Linux');
+
+  const TargetPlatformOS(this.label);
+  final String label;
+  static TargetPlatformOS get host => Platform.isWindows ? windows : linux;
+}
+
 class LocalSteamLocator implements SteamLocator {
   static String binary(String root, {bool? windows}) => path.join(
     root,
@@ -33,7 +42,7 @@ class LocalSteamLocator implements SteamLocator {
           'query',
           key,
           '/v',
-          'SteamPath',
+          key.startsWith('HKCU') ? 'SteamPath' : 'InstallPath',
         ]);
         final match = RegExp(r'REG_SZ\s+(.+)').firstMatch(r.stdout.toString());
         if (match != null) roots.add(match[1]!.trim());
@@ -64,7 +73,9 @@ class LocalSteamLocator implements SteamLocator {
         if (await File(cmd).exists()) steamCmd = cmd;
       }
       final candidate = path.join(home, 'games', 'dst-dedicated');
-      if (await File(binary(candidate)).exists()) server = candidate;
+      if (manual == null && await File(binary(candidate)).exists()) {
+        server = candidate;
+      }
     }
     if (manual != null && manual.isNotEmpty) {
       if (await File(binary(manual)).exists()) {
@@ -74,7 +85,9 @@ class LocalSteamLocator implements SteamLocator {
           'bin64/dontstarve_dedicated_server_nullrenderer_x64${Platform.isWindows ? '.exe' : ''}',
         );
       }
-      roots.add(manual);
+      roots
+        ..clear()
+        ..add(manual);
     }
     final librariesFound = <String>{...roots};
     for (final root in roots) {
@@ -103,7 +116,8 @@ class LocalSteamLocator implements SteamLocator {
       }
       final candidate = path.join(root, 'steamapps', 'common', folder);
       if (await File(binary(candidate)).exists()) {
-        server ??= candidate;
+        if (server != null && !path.equals(server, candidate)) continue;
+        server = candidate;
         build = RegExp(r'"buildid"\s*"([0-9]+)"').firstMatch(text)?[1];
       }
     }

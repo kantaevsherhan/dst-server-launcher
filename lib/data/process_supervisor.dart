@@ -171,11 +171,13 @@ class ProcessSupervisor extends ChangeNotifier implements DstProcessController {
         _log(profile, shard, 'PID ${process.pid}');
         void consume(String line) {
           _log(profile, shard, line);
-          if (states[key] == ShardState.starting &&
+          if ((states[key] == ShardState.starting ||
+                  states[key] == ShardState.attention) &&
               RegExp(
                 r'Sim (un)?paused|Server registered|DST initialized',
                 caseSensitive: false,
               ).hasMatch(line)) {
+            _readinessTimers.remove(key)?.cancel();
             states[key] = ShardState.running;
             notifyListeners();
           }

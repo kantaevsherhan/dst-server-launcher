@@ -15,6 +15,16 @@ class WorkshopScreen extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        SizedBox(
+          height: 164,
+          width: double.infinity,
+          child: Image.asset(
+            'assets/images/workshop.png',
+            fit: BoxFit.cover,
+            excludeFromSemantics: true,
+          ),
+        ),
+        const SizedBox(height: 16),
         PageTitle(context.t('workshop'), context.t('modsTitle')),
         InlineHelp(context.t('modsHelp')),
         const SizedBox(height: 24),
@@ -96,12 +106,13 @@ class _ModEditorState extends State<ModEditor> {
       final values = await context.read<LauncherController>().workshop.resolve(
         input.text,
       );
+      if (!mounted) return;
       final map = {
-        for (final m in widget.mods) m.id: m,
         for (final m in values) m.id: m,
+        for (final m in widget.mods) m.id: m,
       };
       await widget.onChanged(map.values.toList());
-      input.clear();
+      if (mounted) input.clear();
     });
     if (mounted) setState(() => loading = false);
   }

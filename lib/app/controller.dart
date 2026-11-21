@@ -30,10 +30,23 @@ class LauncherController extends ChangeNotifier {
   Installation installation = const Installation();
   bool busy = false;
   String? error;
+  TargetPlatformOS get targetSystem =>
+      TargetPlatformOS.values.asNameMap()[preferences.getString(
+        'targetSystem',
+      )] ??
+      TargetPlatformOS.host;
+
+  bool get localTarget => targetSystem == TargetPlatformOS.host;
+
+  Future<void> setTargetSystem(TargetPlatformOS value) async {
+    await preferences.setString('targetSystem', value.name);
+    notifyListeners();
+  }
+
   String get language => preferences.getString('language') ?? 'ru';
-  ThemeMode get themeMode => preferences.getString('theme') == 'light'
-      ? ThemeMode.light
-      : ThemeMode.dark;
+  ThemeMode get themeMode => preferences.getString('theme') == 'dark'
+      ? ThemeMode.dark
+      : ThemeMode.light;
   String get storageRoot =>
       preferences.getString('storageRoot') ??
       p.join(repository.appDir.path, 'Klei');
@@ -41,9 +54,7 @@ class LauncherController extends ChangeNotifier {
     try {
       profiles = await repository.load();
       await supervisor.reconcile(profiles);
-      installation = await locator.locate(
-        manual: preferences.getString('installDir'),
-      );
+      installation = await _locatePreferred();
     } catch (e) {
       error = e.toString();
     }
@@ -65,15 +76,39 @@ class LauncherController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<Installation> _locatePreferred() async {
+    final automatic = await locator.locate();
+    final saved = preferences.getString('installDir');
+    if (saved == null) return automatic;
+    final preferred = await locator.locate(manual: saved);
+    if (preferred.server == null) return automatic;
+    return Installation(
+      steam: automatic.steam,
+      steamCmd: automatic.steamCmd,
+      server: preferred.server,
+      build: preferred.build,
+      notes: preferred.notes,
+    );
+  }
+
   Future<void> detect({String? manual}) async {
     busy = true;
     notifyListeners();
     try {
-      installation = await locator.locate(
-        manual: manual ?? preferences.getString('installDir'),
-      );
-      if (manual != null && installation.server != null) {
-        await preferences.setString('installDir', installation.server!);
+      if (manual == null) {
+        installation = await _locatePreferred();
+      } else {
+        final selected = await locator.locate(manual: manual);
+        if (selected.server == null) {
+          throw FormatException(selected.notes.join('\n'));
+        }
+        await preferences.setString('installDir', selected.server!);
+        installation = Installation(
+          steam: installation.steam ?? selected.steam,
+          steamCmd: installation.steamCmd ?? selected.steamCmd,
+          server: selected.server,
+          build: selected.build,
+        );
       }
     } finally {
       busy = false;
@@ -141,7 +176,7 @@ class LauncherController extends ChangeNotifier {
     );
     await file.writeAsString(
       const JsonEncoder.withIndent('  ').convert({
-        'version': '0.1.0',
+        'version': '0.2.0',
         'os': Platform.operatingSystem,
         'steamDetected': installation.steam != null,
         'serverDetected': installation.server != null,

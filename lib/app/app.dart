@@ -195,225 +195,56 @@ class _LauncherShellState extends State<LauncherShell> with WindowListener {
                   ),
                 ),
               ),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 1140;
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+            if (widget.path != '/create')
+              Material(
+                color: scheme.surfaceContainer,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
+                  child: Row(
                     children: [
-                      Container(
-                        width: compact ? 84 : 236,
-                        decoration: BoxDecoration(
-                          color: scheme.surfaceContainer,
-                          border: Border(
-                            right: BorderSide(
-                              color: scheme.outline.withValues(alpha: .35),
-                            ),
-                          ),
-                        ),
-                        child: Material(
-                          color: scheme.surfaceContainer,
-                          child: Column(
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
                             children: [
-                              Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: compact ? 16 : 24,
-                                  vertical: 32,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 42,
-                                      height: 42,
-                                      decoration: BoxDecoration(
-                                        color: scheme.primary,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Icon(
-                                        PhosphorIcons.campfire(
-                                          PhosphorIconsStyle.bold,
-                                        ),
-                                        color: scheme.onPrimary,
-                                        size: 25,
-                                      ),
-                                    ),
-                                    if (!compact) ...[
-                                      const SizedBox(width: 12),
-                                      const Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'DST',
-                                              style: TextStyle(
-                                                fontFamily: 'Manrope',
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 23,
-                                                letterSpacing: 2,
-                                              ),
-                                            ),
-                                            Text(
-                                              'SERVER LAUNCHER',
-                                              style: TextStyle(
-                                                fontSize: 9,
-                                                letterSpacing: 1.2,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
                               for (final entry in entries)
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 4,
+                                TextButton.icon(
+                                  style: TextButton.styleFrom(
+                                    backgroundColor:
+                                        widget.path == entry.$3 ||
+                                            entry.$3 == '/' &&
+                                                widget.path.startsWith(
+                                                  '/server/',
+                                                )
+                                        ? scheme.surfaceContainerHighest
+                                        : null,
+                                    foregroundColor: scheme.onSurface,
                                   ),
-                                  child: Tooltip(
-                                    message: context.t(entry.$2),
-                                    child: ListTile(
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: compact ? 16 : 14,
-                                      ),
-                                      minLeadingWidth: 20,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      selected:
-                                          widget.path == entry.$3 ||
-                                          entry.$3 == '/' &&
-                                              (widget.path.startsWith(
-                                                    '/server',
-                                                  ) ||
-                                                  widget.path == '/create'),
-                                      selectedColor: scheme.primary,
-                                      selectedTileColor: scheme.primary
-                                          .withValues(alpha: .1),
-                                      leading: Icon(entry.$1, size: 21),
-                                      title: compact
-                                          ? null
-                                          : Text(
-                                              context.t(entry.$2),
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                      onTap: () => context.go(entry.$3),
-                                    ),
-                                  ),
+                                  onPressed: () => context.go(entry.$3),
+                                  icon: Icon(entry.$1, size: 18),
+                                  label: Text(context.t(entry.$2)),
                                 ),
-                              const Spacer(),
-                              Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: compact
-                                    ? IconButton(
-                                        tooltip: context.t('docs'),
-                                        onPressed: () => guard(
-                                          context,
-                                          () => openExternal(
-                                            context.t('documentationUrl'),
-                                          ),
-                                        ),
-                                        icon: Icon(PhosphorIcons.bookOpen()),
-                                      )
-                                    : Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Divider(),
-                                          TextButton.icon(
-                                            onPressed: () => guard(
-                                              context,
-                                              () => openExternal(
-                                                context.t('documentationUrl'),
-                                              ),
-                                            ),
-                                            icon: Icon(
-                                              PhosphorIcons.bookOpen(),
-                                              size: 18,
-                                            ),
-                                            label: Text(context.t('docs')),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Text(
-                                            context.t('desktopNote'),
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall,
-                                          ),
-                                          const Text(
-                                            'v0.1.0',
-                                            style: TextStyle(fontSize: 11),
-                                          ),
-                                        ],
-                                      ),
-                              ),
                             ],
                           ),
                         ),
                       ),
-                      Expanded(
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 32,
-                                vertical: 16,
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border(
-                                  bottom: BorderSide(
-                                    color: scheme.outline.withValues(alpha: .3),
-                                  ),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    context.t('localOnly'),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall,
-                                  ),
-                                  const Spacer(),
-                                  Icon(
-                                    PhosphorIcons.desktopTower(),
-                                    size: 16,
-                                    color: scheme.primary,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Flexible(
-                                    child: Text(
-                                      context
-                                                  .watch<LauncherController>()
-                                                  .installation
-                                                  .server ==
-                                              null
-                                          ? context.t('notInstalled')
-                                          : context.t('dedicatedServer'),
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(child: widget.child),
-                          ],
+                      IconButton(
+                        tooltip: context.t('docs'),
+                        icon: Icon(PhosphorIcons.bookOpen()),
+                        onPressed: () => guard(
+                          context,
+                          () => openExternal(context.t('documentationUrl')),
                         ),
                       ),
                     ],
-                  );
-                },
+                  ),
+                ),
               ),
-            ),
+            if (widget.path != '/create') const Divider(height: 1),
+            Expanded(child: widget.child),
           ],
         ),
       ),

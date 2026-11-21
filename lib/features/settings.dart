@@ -19,7 +19,15 @@ class SettingsScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          PageTitle(context.t('settings'), context.t('settingsSubtitle')),
+          PageTitle(
+            context.t('settings'),
+            context.t('settingsSubtitle'),
+            action: Image.asset(
+              'assets/images/gear.png',
+              height: 56,
+              excludeFromSemantics: true,
+            ),
+          ),
           Panel(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

@@ -30,3 +30,7 @@ CGNAT traversal, real Workshop gameplay compatibility or all distro runtime comb
 - Actual DST gameplay/Klei login and internet joining remain unverified; no real token was requested, stored or published during development.
 
 Final safety regressions cover start/backup exclusion, active-profile snapshot rejection, imported Lua preservation and nested import destinations. Native CI discovered an unbounded titlebar height; the area is now constrained to 40 logical pixels.
+
+## Installer interface, 2026-11-22
+
+Headless widget tests cover the default local OS, selecting the other OS, returning from its installation guide, English with enlarged text, and a local wizard through the configuration review. Process tests inject fake shards for save, restart and delayed readiness. Filesystem tests use temporary directories for cluster creation, backups, restore and import. Workshop collection responses are fixtures. Screenshots cover light and dark themes, including the horizontal scene. Native launch, live Steam installation, Klei authentication and multiplayer were excluded from this check.

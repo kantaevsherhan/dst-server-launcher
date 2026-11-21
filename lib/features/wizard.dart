@@ -82,29 +82,32 @@ class _WizardScreenState extends State<WizardScreen> {
 
   void _saveDraft() {
     debounce?.cancel();
-    debounce = Timer(const Duration(milliseconds: 400), () {
-      unawaited(
-        controller.preferences.setString(
-          'wizardDraft',
-          jsonEncode({
-            'name': name.text,
-            'description': description.text,
-            'slots': players.text,
-            'mode': mode,
-            'caves': caves,
-            'pvp': pvp,
-            'pause': pause,
-            'worldSize': worldSize,
-            'root': root,
-            'mods': mods.map((m) => m.toJson()).toList(),
-          }),
-        ),
-      );
-    });
+    debounce = Timer(const Duration(milliseconds: 400), _persistDraft);
+  }
+
+  void _persistDraft() {
+    unawaited(
+      controller.preferences.setString(
+        'wizardDraft',
+        jsonEncode({
+          'name': name.text,
+          'description': description.text,
+          'slots': players.text,
+          'mode': mode,
+          'caves': caves,
+          'pvp': pvp,
+          'pause': pause,
+          'worldSize': worldSize,
+          'root': root,
+          'mods': mods.map((m) => m.toJson()).toList(),
+        }),
+      ),
+    );
   }
 
   @override
   void dispose() {
+    if (debounce?.isActive == true && step < 8) _persistDraft();
     debounce?.cancel();
     for (final c in [name, description, password, players, token]) {
       c.dispose();
@@ -140,6 +143,10 @@ class _WizardScreenState extends State<WizardScreen> {
   }
 
   Future<void> advance() async {
+    if (step == 1 && !controller.localTarget) {
+      context.go('/');
+      return;
+    }
     if (step == 1 && controller.installation.server == null) {
       await guard(
         context,
@@ -183,157 +190,141 @@ class _WizardScreenState extends State<WizardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    context.watch<LauncherController>();
-    return LayoutBuilder(
-      builder: (context, c) {
-        final wide = c.maxWidth >= 1000;
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(32, 24, 32, 0),
-              child: PageTitle(
-                context.t('setupTitle'),
-                context.t('setupSubtitle'),
-                action: Text(
-                  '${context.t('stepOf')} ${step + 1} / 9',
-                  style: Theme.of(context).textTheme.bodySmall,
+    final c = context.watch<LauncherController>();
+    final scheme = Theme.of(context).colorScheme;
+    final count = c.localTarget ? steps.length : 2;
+    final progress = '${context.t('stepOf')} ${step + 1} / $count';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          color: scheme.surfaceContainer,
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+          child: Row(
+            children: [
+              Image.asset(
+                'assets/images/tent.png',
+                width: 36,
+                height: 36,
+                excludeFromSemantics: true,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  context.t('setupTitle'),
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
-            ),
-            Expanded(
-              child: Row(
+              Semantics(liveRegion: true, child: Text(progress)),
+            ],
+          ),
+        ),
+        LinearProgressIndicator(
+          value: (step + 1) / count,
+          minHeight: 3,
+          semanticsLabel: progress,
+        ),
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final rail =
+                  constraints.maxWidth >= 960 &&
+                  MediaQuery.textScalerOf(context).scale(14) < 22;
+              return Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (wide)
+                  if (rail) ...[
                     SizedBox(
-                      width: 210,
-                      child: ListView(
-                        padding: const EdgeInsets.fromLTRB(24, 0, 12, 24),
-                        children: [
-                          for (var i = 0; i < steps.length; i++)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: ListTile(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
+                      width: 208,
+                      child: Material(
+                        color: scheme.surfaceContainer,
+                        child: ListView(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 8,
+                          ),
+                          children: [
+                            for (var i = 0; i < count; i++)
+                              ListTile(
+                                dense: true,
                                 selected: i == step,
-                                selectedTileColor: Theme.of(context)
-                                    .colorScheme
-                                    .primary
-                                    .withValues(alpha: .1),
-                                leading: CircleAvatar(
-                                  radius: 13,
-                                  backgroundColor: i <= step
-                                      ? Theme.of(context).colorScheme.primary
-                                      : Theme.of(context)
-                                            .colorScheme
-                                            .surfaceContainerHighest,
-                                  foregroundColor: i <= step
-                                      ? Theme.of(context).colorScheme.onPrimary
-                                      : Theme.of(context).colorScheme.onSurface,
-                                  child: i < step
-                                      ? Icon(PhosphorIcons.check(), size: 15)
-                                      : Text(
-                                          '${i + 1}',
-                                          style: const TextStyle(fontSize: 11),
-                                        ),
-                                ),
-                                title: Text(
-                                  context.t(steps[i]),
-                                  style: const TextStyle(fontSize: 12),
-                                ),
+                                selectedTileColor:
+                                    scheme.surfaceContainerHighest,
+                                leading: i < step
+                                    ? Icon(PhosphorIcons.check(), size: 16)
+                                    : Text('${i + 1}'),
+                                title: Text(context.t(steps[i])),
                                 onTap: i < step && step < 8 && !saving
                                     ? () => setState(() => step = i)
                                     : null,
+                                enabled: i <= step,
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
+                    const VerticalDivider(width: 1),
+                  ],
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: EdgeInsets.fromLTRB(wide ? 16 : 32, 0, 32, 32),
+                      key: ValueKey(step),
+                      padding: const EdgeInsets.fromLTRB(32, 28, 32, 32),
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1000),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (!wide) ...[
-                                LinearProgressIndicator(
-                                  value: (step + 1) / 9,
-                                  minHeight: 3,
-                                ),
-                                const SizedBox(height: 20),
-                                Text(
-                                  context.t(steps[step]),
-                                  style: Theme.of(context).textTheme.titleLarge,
-                                ),
-                                const SizedBox(height: 20),
-                              ],
-                              _content(),
-                              const SizedBox(height: 32),
-                            ],
+                          constraints: const BoxConstraints(maxWidth: 880),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: _content(),
                           ),
                         ),
                       ),
                     ),
                   ),
                 ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainer,
-                border: Border(
-                  top: BorderSide(color: Theme.of(context).dividerColor),
+              );
+            },
+          ),
+        ),
+        const Divider(height: 1),
+        Container(
+          color: scheme.surfaceContainer,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          child: OverflowBar(
+            alignment: MainAxisAlignment.end,
+            spacing: 12,
+            overflowSpacing: 8,
+            children: [
+              if (step < 8)
+                TextButton(
+                  onPressed: saving ? null : () => context.go('/'),
+                  child: Text(context.t('cancel')),
+                ),
+              if (step > 0 && step < 8)
+                OutlinedButton(
+                  onPressed: saving ? null : () => setState(() => step--),
+                  child: Text(context.t('back')),
+                ),
+              FilledButton(
+                onPressed: saving ? null : advance,
+                child: Text(
+                  context.t(
+                    saving
+                        ? 'creating'
+                        : !c.localTarget && step == 1
+                        ? 'finishGuide'
+                        : step == 7
+                        ? 'finishReview'
+                        : step == 8
+                        ? 'openManagement'
+                        : 'next',
+                  ),
                 ),
               ),
-              child: Row(
-                children: [
-                  TextButton.icon(
-                    onPressed: step > 0 && step < 8 && !saving
-                        ? () => setState(() => step--)
-                        : null,
-                    icon: Icon(PhosphorIcons.arrowLeft(), size: 16),
-                    label: Text(context.t('back')),
-                  ),
-                  const Spacer(),
-                  FilledButton.icon(
-                    onPressed: saving ? null : advance,
-                    icon: saving
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Icon(
-                            step >= 7
-                                ? PhosphorIcons.check()
-                                : PhosphorIcons.arrowRight(),
-                            size: 18,
-                          ),
-                    label: Text(
-                      context.t(
-                        saving
-                            ? 'creating'
-                            : step == 7
-                            ? 'finishReview'
-                            : step == 8
-                            ? 'openManagement'
-                            : 'next',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -357,79 +348,67 @@ class _WizardScreenState extends State<WizardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.asset(
-              'assets/images/expedition.png',
-              height: 180,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              alignment: Alignment.centerRight,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Panel(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.t('requirements'),
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 12),
-                Text(context.t('requirementsBody')),
-                const SizedBox(height: 16),
-                StatusChip(
-                  '${context.t('os')}: ${Platform.isWindows ? 'Windows' : 'Linux'} x64',
-                  active: true,
-                ),
-              ],
+          TargetSystemPicker(controller: controller),
+          const SizedBox(height: 12),
+          Text(
+            context.t(
+              controller.localTarget ? 'localTargetHelp' : 'otherTargetHelp',
             ),
           ),
           const SizedBox(height: 24),
           Text(
-            context.t('storagePath'),
+            context.t('requirements'),
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          SelectableText(root ?? controller.storageRoot),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              OutlinedButton.icon(
-                onPressed: () => guard(context, () async {
-                  final folder = await selectDirectory();
-                  if (folder != null) {
-                    setState(() => root = folder);
-                    _saveDraft();
-                  }
-                }),
-                icon: Icon(PhosphorIcons.folderOpen()),
-                label: Text(context.t('browse')),
-              ),
-              OutlinedButton(
-                onPressed: () => guard(context, () async {
-                  final dir = Directory(root ?? controller.storageRoot);
-                  await dir.create(recursive: true);
-                  final probe = File(
-                    '${dir.path}${Platform.pathSeparator}.launcher-write-${DateTime.now().microsecondsSinceEpoch}',
-                  );
-                  await probe.writeAsString('check');
-                  await probe.delete();
-                }, success: context.t('writable')),
-                child: Text(context.t('checkStorage')),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          InlineHelp(context.t('diskHint')),
+          Text(context.t('requirementsBody')),
+          if (controller.localTarget) ...[
+            const SizedBox(height: 24),
+            Text(
+              context.t('storagePath'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            SelectableText(root ?? controller.storageRoot),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => guard(context, () async {
+                    final folder = await selectDirectory();
+                    if (folder != null) {
+                      if (!mounted) return;
+                      setState(() => root = folder);
+                      _saveDraft();
+                    }
+                  }),
+                  icon: Icon(PhosphorIcons.folderOpen()),
+                  label: Text(context.t('browse')),
+                ),
+                OutlinedButton(
+                  onPressed: () => guard(context, () async {
+                    final dir = Directory(root ?? controller.storageRoot);
+                    await dir.create(recursive: true);
+                    final probe = File(
+                      '${dir.path}${Platform.pathSeparator}.launcher-write-${DateTime.now().microsecondsSinceEpoch}',
+                    );
+                    await probe.writeAsString('check');
+                    await probe.delete();
+                  }, success: context.t('writable')),
+                  child: Text(context.t('checkStorage')),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            InlineHelp(context.t('diskHint')),
+          ],
         ],
       ),
     ),
     1 => _heading(
-      'installTitle',
+      controller.localTarget ? 'installTitle' : 'targetInstallTitle',
       'installHelp',
       child: const InstallationPanel(),
     ),
@@ -693,6 +672,12 @@ class _WizardScreenState extends State<WizardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Image.asset(
+                  'assets/images/crow.png',
+                  height: 64,
+                  excludeFromSemantics: true,
+                ),
+                const SizedBox(height: 8),
                 Text(
                   profile.name,
                   style: Theme.of(context).textTheme.headlineMedium,
@@ -757,10 +742,10 @@ class _WizardScreenState extends State<WizardScreen> {
       child: Panel(
         child: Column(
           children: [
-            Icon(
-              PhosphorIcons.checkCircle(),
-              color: Theme.of(context).colorScheme.primary,
-              size: 80,
+            Image.asset(
+              'assets/images/fire.png',
+              height: 84,
+              excludeFromSemantics: true,
             ),
             const SizedBox(height: 24),
             Text(name.text, style: Theme.of(context).textTheme.headlineMedium),
