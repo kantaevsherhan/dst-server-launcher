@@ -189,9 +189,21 @@ class _LauncherShellState extends State<LauncherShell> with WindowListener {
                 color: scheme.surfaceContainer,
                 child: WindowCaption(
                   brightness: Theme.of(context).brightness,
-                  title: const Text(
-                    'DST Server Launcher',
-                    style: TextStyle(fontSize: 12),
+                  title: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        'assets/images/launcher-logo.png',
+                        width: 24,
+                        height: 24,
+                        excludeFromSemantics: true,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'DST Server Launcher',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ],
                   ),
                 ),
               ),

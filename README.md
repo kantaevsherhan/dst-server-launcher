@@ -83,3 +83,9 @@ flutter build linux --release   # в Linux
 [Проверки](docs/testing.md) · [Релиз](docs/release.md) · [Правила по ролям](docs/skills.md).
 
 MIT. Не связан с Klei Entertainment или Valve. Игровые файлы не распространяются.
+
+## Steam subscriptions and headless Linux
+
+Open **Workshop → My Steam subscriptions** to browse DST subscriptions synced by the local Steam client. When editing a world, choose a mod with **+**. On shared PCs, select the local Steam account. The list can include client-only items. Restart the stopped world after changing its mod selection.
+
+For Linux Server over SSH, download `install-dst-server.sh` from the release. See [Linux setup](docs/setup-linux.md) for dependency and shard commands.

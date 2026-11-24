@@ -29,6 +29,57 @@ class LauncherController extends ChangeNotifier {
   List<ServerProfile> profiles = [];
   Installation installation = const Installation();
   bool busy = false;
+  bool get installing => supervisor.installing;
+  String installOutput = '';
+
+  Future<void> installLinux(String destination, String script) async {
+    if (!Platform.isLinux ||
+        installing ||
+        profiles.any(supervisor.active) ||
+        supervisor.maintenance.isNotEmpty) {
+      throw StateError(
+        'Stop active worlds and wait for any installation or maintenance to finish.',
+      );
+    }
+    supervisor.installing = true;
+    installOutput = '';
+    notifyListeners();
+    try {
+      final process = await Process.start('/bin/bash', [
+        '-s',
+      ], runInShell: false);
+      Future<void> drain(Stream<List<int>> stream) async {
+        await for (final chunk in stream.transform(
+          const Utf8Decoder(allowMalformed: true),
+        )) {
+          final text = installOutput + chunk;
+          installOutput = text.length > 3000
+              ? text.substring(text.length - 3000)
+              : text;
+          notifyListeners();
+        }
+      }
+
+      final streams = Future.wait([
+        drain(process.stdout),
+        drain(process.stderr),
+      ]);
+      process.stdin.add(utf8.encode(script));
+      await process.stdin.close();
+      final code = await process.exitCode;
+      await streams;
+      if (code != 0) {
+        throw StateError(
+          'SteamCMD installer exited with code $code.\n$installOutput',
+        );
+      }
+      await detect(manual: destination);
+    } finally {
+      supervisor.installing = false;
+      notifyListeners();
+    }
+  }
+
   String? error;
   TargetPlatformOS get targetSystem =>
       TargetPlatformOS.values.asNameMap()[preferences.getString(
@@ -176,7 +227,7 @@ class LauncherController extends ChangeNotifier {
     );
     await file.writeAsString(
       const JsonEncoder.withIndent('  ').convert({
-        'version': '0.2.0',
+        'version': '0.2.1',
         'os': Platform.operatingSystem,
         'steamDetected': installation.steam != null,
         'serverDetected': installation.server != null,

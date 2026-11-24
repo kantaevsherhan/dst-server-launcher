@@ -230,5 +230,21 @@
   "targetInstallTitle": "Install on another computer",
   "saveGuide": "Save instructions",
   "finishGuide": "Finish",
-  "linuxPathError": "Enter an absolute Linux directory such as /home/player/games/dst."
+  "linuxPathError": "Enter an absolute Linux directory such as /home/player/games/dst.",
+  "modCatalog": "Browse mods",
+  "findMod": "Search mods by name",
+  "modDetails": "Mod details",
+  "noModDescription": "No description provided.",
+  "catalogUnavailable": "Could not load the Steam catalog. Check your connection and retry.",
+  "noModResults": "No mods on this page.",
+  "headlessHelp": "For a headless Linux server, save the script and run bash install-dst-server.sh on that server. Use --deps to see system dependencies.",
+  "headlessInstaller": "Save headless Linux installer",
+  "installSteamCmd": "Install here using SteamCMD",
+  "installComplete": "Server files installed and detected.",
+  "mySubscriptions": "My Steam subscriptions",
+  "chooseSteamAccount": "Choose a Steam account",
+  "noLocalSubscriptions": "No local DST subscription list was found. Open Steam with your account on this computer and refresh.",
+  "unselectableMod": "Steam details unavailable",
+  "transferLinuxInstructions": "Save the installer below, transfer it to the Linux server and run bash install-dst-server.sh.",
+  "clientOnlyMod": "Client-only mod · enable in game"
 }

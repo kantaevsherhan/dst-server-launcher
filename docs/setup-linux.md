@@ -1,6 +1,27 @@
 # Linux x64: Debian, Ubuntu, Mint, Manjaro, Fedora
 
-Two installation routes are implemented for every listed distribution:
+## Linux Server over SSH
+
+Download the standalone installer on the target x86_64 host:
+
+```bash
+curl -fL https://github.com/kantaevsherhan/dst-server-launcher/releases/download/v0.2.1/install-dst-server.sh -o install-dst-server.sh
+bash install-dst-server.sh --deps
+# Install the printed dependencies as needed, then run as your regular user:
+bash install-dst-server.sh
+```
+
+For an existing world, transfer its complete stopped cluster privately, including cluster_token.txt and both shard folders. Start each shard in a separate terminal or tmux session, substituting your own cluster path:
+
+```bash
+bash install-dst-server.sh --start-shard "$HOME/.klei/DoNotStarveTogether/MyCluster" Master
+bash install-dst-server.sh --start-shard "$HOME/.klei/DoNotStarveTogether/MyCluster" Caves
+```
+
+The script uses anonymous SteamCMD and defaults to `$HOME/games/dst-dedicated`. It runs over SSH without a desktop environment.
+
+## Desktop routes
+
 
 **Steam Client**: install your distribution's official Steam package, enable the Library → Tools filter and install
 Dedicated Server 343050. The launcher opens the same Steam URI as Windows. It detects standard `~/.steam/steam`
@@ -11,7 +32,7 @@ manual directory selection and host filesystem access. Do not run the launcher a
 commands, a per-user official Valve SteamCMD downloader, and an exportable install.sh. The generated script never
 executes sudo: prerequisite commands are comments and must be run separately by the user. SteamCMD then runs
 `+force_install_dir <quoted absolute path> +login anonymous +app_update 343050 validate +quit`.
-The launcher does not execute installation scripts automatically.
+On a Linux desktop, select **Install here with SteamCMD** to start the installation.
 
 | Distribution | Dependency instructions offered |
 |---|---|

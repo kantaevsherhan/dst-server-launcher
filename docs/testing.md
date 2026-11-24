@@ -34,3 +34,7 @@ Final safety regressions cover start/backup exclusion, active-profile snapshot r
 ## Installer interface, 2026-11-22
 
 Headless widget tests cover the default local OS, selecting the other OS, returning from its installation guide, English with enlarged text, and a local wizard through the configuration review. Process tests inject fake shards for save, restart and delayed readiness. Filesystem tests use temporary directories for cluster creation, backups, restore and import. Workshop collection responses are fixtures. Screenshots cover light and dark themes, including the horizontal scene. Native launch, live Steam installation, Klei authentication and multiplayer were excluded from this check.
+
+## 0.2.1 verification
+
+A Windows smoke test used the existing game's ASCII short path on a Cyrillic profile. Master and Caves both loaded the existing cluster token, generated their worlds, reached simulation and wrote saves. Master registered and both processes exited with code zero after the console shutdown command. Joining from a second internet connection remains unverified. Local per-account DST subscription files were identified independently of installed Workshop content. Linux desktop packaging and standalone headless script checks do not establish runtime compatibility with every distribution.

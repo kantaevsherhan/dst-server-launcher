@@ -9,6 +9,7 @@ import '../domain/models.dart';
 import '../domain/services.dart';
 import 'local_repository.dart';
 import 'platform_services.dart';
+import 'windows_game_path.dart';
 
 typedef SpawnProcess = Future<Process> Function(
   String executable,
@@ -46,6 +47,7 @@ class ProcessSupervisor extends ChangeNotifier implements DstProcessController {
   final Map<String, Timer> _readinessTimers = {};
   final Map<String, Future<void>> _logQueues = {};
   bool _disposed = false;
+  bool installing = false;
   Future<void> _journalQueue = Future.value();
   @override
   void notifyListeners() {
@@ -115,7 +117,7 @@ class ProcessSupervisor extends ChangeNotifier implements DstProcessController {
   List<String> arguments(ServerProfile profile, String shard) => [
     '-console',
     '-persistent_storage_root',
-    profile.storageRoot,
+    gameStoragePath(profile.storageRoot),
     '-conf_dir',
     'DoNotStarveTogether',
     '-cluster',
@@ -127,6 +129,7 @@ class ProcessSupervisor extends ChangeNotifier implements DstProcessController {
   ];
   @override
   Future<void> start(ServerProfile profile) async {
+    if (installing) throw StateError('SteamCMD installation in progress');
     if (maintenance.contains(profile.id)) {
       throw StateError('A backup or restore is in progress');
     }

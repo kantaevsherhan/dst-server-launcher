@@ -28,11 +28,8 @@ class LocalSteamLocator implements SteamLocator {
   static String? installFolder(String manifest) =>
       RegExp(r'"installdir"\s*"([^"\r\n]+)"').firstMatch(manifest)?[1];
 
-  @override
-  Future<Installation> locate({String? manual}) async {
+  static Future<Set<String>> steamRoots() async {
     final roots = <String>{};
-    String? steam, steamCmd, server, build;
-    final notes = <String>[];
     if (Platform.isWindows) {
       for (final key in [
         r'HKCU\Software\Valve\Steam',
@@ -56,7 +53,27 @@ class LocalSteamLocator implements SteamLocator {
       roots.addAll([
         path.join(home, '.steam', 'steam'),
         path.join(home, '.local', 'share', 'Steam'),
+        path.join(
+          home,
+          '.var',
+          'app',
+          'com.valvesoftware.Steam',
+          '.local',
+          'share',
+          'Steam',
+        ),
       ]);
+    }
+    return roots;
+  }
+
+  @override
+  Future<Installation> locate({String? manual}) async {
+    final roots = await steamRoots();
+    String? steam, steamCmd, server, build;
+    final notes = <String>[];
+    if (!Platform.isWindows) {
+      final home = Platform.environment['HOME'] ?? '';
       for (final cmd in [
         '/usr/games/steamcmd',
         '/usr/bin/steamcmd',
@@ -167,24 +184,19 @@ class LinuxCommands implements ServerInstaller {
   }
 
   @override
-  String linuxScript(String destination, {String distro = 'Ubuntu'}) =>
-      '''#!/usr/bin/env bash
-set -euo pipefail
-# $distro: run these dependency commands yourself after reviewing.
-${dependencies(distro).split('\n').map((line) => '# $line').join('\n')}
-# Official Valve SteamCMD, installed in your account. No sudo below.
-STEAMCMD_DIR="\$HOME/.local/share/dst-launcher/steamcmd"
-mkdir -p -- "\$STEAMCMD_DIR"
-if ! command -v steamcmd >/dev/null && [ ! -f "\$STEAMCMD_DIR/steamcmd.sh" ]; then
-  curl --fail --location --proto '=https' --tlsv1.2 https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz -o "\$STEAMCMD_DIR/steamcmd.tar.gz"
-  tar -xzf "\$STEAMCMD_DIR/steamcmd.tar.gz" -C "\$STEAMCMD_DIR"
-fi
-if command -v steamcmd >/dev/null; then STEAMCMD_BIN="\$(command -v steamcmd)"; else STEAMCMD_BIN="\$STEAMCMD_DIR/steamcmd.sh"; fi
-mkdir -p -- ${quote(destination)}
-"\$STEAMCMD_BIN" +force_install_dir ${quote(destination)} +login anonymous +app_update 343050 validate +quit
-test -x ${quote(path.posix.join(destination, 'bin64/dontstarve_dedicated_server_nullrenderer_x64'))}
-ldd ${quote(path.posix.join(destination, 'bin64/dontstarve_dedicated_server_nullrenderer_x64'))}
-''';
+  String linuxScript(String destination, {String distro = 'Ubuntu'}) {
+    final hints = dependencies(distro)
+        .split('\n')
+        .map((line) => '# $line')
+        .join('\n');
+    return shellTemplate.replaceFirst(
+      r'DEFAULT_DEST="$HOME/games/dst-dedicated"',
+      '$hints\nDEFAULT_DEST=${quote(destination)}',
+    );
+  }
+
+  LinuxCommands(this.shellTemplate);
+  final String shellTemplate;
 }
 
 class LocalPortInspector implements PortInspector {

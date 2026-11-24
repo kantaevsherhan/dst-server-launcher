@@ -118,10 +118,9 @@ void main() {
   }
   for (final distro in LinuxCommands.distributions) {
     test('Generate safe official SteamCMD script for $distro', () {
-      final script = LinuxCommands().linuxScript(
-        "/home/друзья/server's world",
-        distro: distro,
-      );
+      final script = LinuxCommands(
+        File('scripts/linux/install-dst-server.sh').readAsStringSync(),
+      ).linuxScript("/home/друзья/server's world", distro: distro);
       expect(script, contains("'\"'\"'"));
       expect(script, contains('+app_update 343050 validate'));
       expect(

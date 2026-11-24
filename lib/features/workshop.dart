@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/icons.dart';
+import 'mod_catalog.dart';
 import '../core/ink_frame.dart';
 import '../app/controller.dart';
 import '../app/strings.dart';
@@ -36,13 +37,14 @@ class WorkshopScreen extends StatelessWidget {
         InlineHelp(context.t('modsHelp')),
         const SizedBox(height: 24),
         FilledButton.icon(
-          onPressed: () => guard(
-            context,
-            () =>
-                openExternal('https://steamcommunity.com/app/322330/workshop/'),
-          ),
-          icon: Icon(PhosphorIcons.arrowSquareOut()),
-          label: Text(context.t('openWorkshop')),
+          onPressed: () => browseMods(context),
+          icon: Icon(PhosphorIcons.puzzlePiece()),
+          label: Text(context.t('modCatalog')),
+        ),
+        TextButton.icon(
+          onPressed: () => browseMods(context, subscriptions: true),
+          icon: Icon(PhosphorIcons.steamLogo()),
+          label: Text(context.t('mySubscriptions')),
         ),
         const SizedBox(height: 24),
         for (final profile in context.watch<LauncherController>().profiles)
@@ -159,16 +161,33 @@ class _ModEditorState extends State<ModEditor> {
                 : Icon(PhosphorIcons.plus(), size: 18),
             label: Text(context.t(loading ? 'busy' : 'addMod')),
           ),
-          TextButton.icon(
-            onPressed: () => guard(
-              context,
-              () => openExternal(
-                'https://steamcommunity.com/app/322330/workshop/',
+          for (final subscriptions in [true, false])
+            TextButton.icon(
+              onPressed: loading
+                  ? null
+                  : () => guard(context, () async {
+                      final mod = await browseMods(
+                        context,
+                        select: !widget.locked,
+                        subscriptions: subscriptions,
+                      );
+                      if (!mounted ||
+                          widget.locked ||
+                          mod == null ||
+                          widget.mods.any((m) => m.id == mod.id)) {
+                        return;
+                      }
+                      await widget.onChanged([...widget.mods, mod]);
+                    }),
+              icon: Icon(
+                subscriptions
+                    ? PhosphorIcons.steamLogo()
+                    : PhosphorIcons.puzzlePiece(),
+              ),
+              label: Text(
+                context.t(subscriptions ? 'mySubscriptions' : 'modCatalog'),
               ),
             ),
-            icon: Icon(PhosphorIcons.arrowSquareOut(), size: 18),
-            label: Text(context.t('openWorkshop')),
-          ),
         ],
       ),
       const SizedBox(height: 24),
@@ -218,14 +237,15 @@ class _ModEditorState extends State<ModEditor> {
                       ),
                     ),
                     IconButton(
-                      tooltip: context.t('openWorkshop'),
-                      onPressed: () => guard(
-                        context,
-                        () => openExternal(
-                          'https://steamcommunity.com/sharedfiles/filedetails/?id=${mod.id}',
-                        ),
-                      ),
-                      icon: Icon(PhosphorIcons.arrowSquareOut()),
+                      tooltip: context.t('modDetails'),
+                      onPressed: () => guard(context, () async {
+                        final entry = await context
+                            .read<LauncherController>()
+                            .workshop
+                            .detail(mod.id);
+                        if (context.mounted) await showMod(context, entry);
+                      }),
+                      icon: Icon(PhosphorIcons.info()),
                     ),
                     IconButton(
                       tooltip: context.t('remove'),

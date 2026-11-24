@@ -57,7 +57,10 @@ jobs:
         run: |
           mkdir -p dist
           cp README.md LICENSE THIRD_PARTY_NOTICES.md build/linux/x64/release/bundle/
-          cp scripts/linux/launch.sh build/linux/x64/release/bundle/
+          cp scripts/linux/{launch.sh,install-dst-server.sh} build/linux/x64/release/bundle/
+          cp scripts/linux/install-dst-server.sh dist/
+          bash -n dist/install-dst-server.sh
+          bash dist/install-dst-server.sh --help
           chmod +x build/linux/x64/release/bundle/launch.sh
           tar -czf dist/dst-server-launcher-linux-x64.tar.gz -C build/linux/x64/release/bundle .
       - uses: actions/upload-artifact@v4

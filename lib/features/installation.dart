@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/icons.dart';
@@ -75,6 +75,8 @@ class InstallationPanel extends StatefulWidget {
 
 class _InstallationPanelState extends State<InstallationPanel> {
   String distro = 'Ubuntu';
+  String? template;
+
   final pathController = TextEditingController(
     text: Platform.isLinux
         ? '${Platform.environment['HOME'] ?? '/home/user'}/games/dst-dedicated'
@@ -83,6 +85,9 @@ class _InstallationPanelState extends State<InstallationPanel> {
   @override
   void initState() {
     super.initState();
+    rootBundle.loadString('scripts/linux/install-dst-server.sh').then((s) {
+      if (mounted) setState(() => template = s);
+    });
     if (Platform.isLinux) {
       final file = File('/etc/os-release');
       if (file.existsSync()) {
@@ -107,11 +112,11 @@ class _InstallationPanelState extends State<InstallationPanel> {
         destination.startsWith('/') &&
         destination.trim() != '/' &&
         !RegExp(r'[\x00-\x1f\x7f]').hasMatch(destination);
-    final script = linux && validPath
-        ? LinuxCommands().linuxScript(destination, distro: distro)
+    final script = linux && validPath && template != null
+        ? LinuxCommands(template!).linuxScript(destination, distro: distro)
         : null;
     final transfer = context
-        .t('transferInstructions')
+        .t(linux ? 'transferLinuxInstructions' : 'transferInstructions')
         .replaceAll('{os}', controller.targetSystem.label);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,6 +213,46 @@ class _InstallationPanelState extends State<InstallationPanel> {
           ),
         ],
         if (linux) ...[
+          const SizedBox(height: 20),
+          InlineHelp(context.t('headlessHelp')),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: [
+              if (controller.localTarget)
+                FilledButton.icon(
+                  onPressed: controller.installing || script == null
+                      ? null
+                      : () => guard(
+                          context,
+                          () => controller.installLinux(destination, script),
+                          success: context.t('installComplete'),
+                        ),
+                  icon: Icon(PhosphorIcons.downloadSimple()),
+                  label: Text(
+                    context.t(
+                      controller.installing ? 'busy' : 'installSteamCmd',
+                    ),
+                  ),
+                ),
+              OutlinedButton.icon(
+                onPressed: template == null
+                    ? null
+                    : () => guard(context, () async {
+                        await FilePicker.saveFile(
+                          fileName: 'install-dst-server.sh',
+                          bytes: Uint8List.fromList(utf8.encode(template!)),
+                        );
+                      }),
+                icon: Icon(PhosphorIcons.fileArrowDown()),
+                label: Text(context.t('headlessInstaller')),
+              ),
+            ],
+          ),
+          if (controller.installing) const LinearProgressIndicator(),
+          if (controller.installOutput.isNotEmpty)
+            SelectableText(controller.installOutput),
           const SizedBox(height: 24),
           ExpansionTile(
             initiallyExpanded: true,

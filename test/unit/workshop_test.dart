@@ -52,6 +52,47 @@ void main() {
     },
   );
 
+  test('Subscription titles are verified and missing or client-only entries cannot be added', () async {
+    final dio = Dio()
+      ..interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                data: {
+                  'response': {
+                    'publishedfiledetails': [
+                      {
+                        'result': 1,
+                        'consumer_app_id': 322330,
+                        'publishedfileid': '12',
+                        'title': 'Example',
+                      },
+                      {
+                        'result': 1,
+                        'consumer_app_id': 322330,
+                        'publishedfileid': '13',
+                        'title': 'HUD',
+                        'tags': [
+                          {'tag': 'client_only_mod'},
+                        ],
+                      },
+                      {'result': 9, 'publishedfileid': '14'},
+                    ],
+                  },
+                },
+              ),
+            );
+          },
+        ),
+      );
+    final items = await SteamWorkshopRepository(dio: dio)
+        .subscriptions(['13', '14', '12']);
+    expect(items.map((e) => e.mod.title), ['HUD', 'Workshop 14', 'Example']);
+    expect(items.map((e) => e.selectable), [false, false, true]);
+  });
+
   test('Wrong game is rejected before adding the item', () async {
     final dio = Dio();
     dio.interceptors.add(
