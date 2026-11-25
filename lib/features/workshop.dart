@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../core/icons.dart';
 import 'mod_catalog.dart';
+import 'mod_settings.dart';
 import '../core/ink_frame.dart';
 import '../app/controller.dart';
 import '../app/strings.dart';
@@ -166,18 +167,18 @@ class _ModEditorState extends State<ModEditor> {
               onPressed: loading
                   ? null
                   : () => guard(context, () async {
-                      final mod = await browseMods(
+                      await browseMods(
                         context,
-                        select: !widget.locked,
                         subscriptions: subscriptions,
+                        select: !widget.locked,
+                        added: {for (final m in widget.mods) m.id: ''},
+                        onAdd: (mod) async {
+                          if (!widget.locked &&
+                              !widget.mods.any((m) => m.id == mod.id)) {
+                            await widget.onChanged([...widget.mods, mod]);
+                          }
+                        },
                       );
-                      if (!mounted ||
-                          widget.locked ||
-                          mod == null ||
-                          widget.mods.any((m) => m.id == mod.id)) {
-                        return;
-                      }
-                      await widget.onChanged([...widget.mods, mod]);
                     }),
               icon: Icon(
                 subscriptions
@@ -315,9 +316,28 @@ class _ModEditorState extends State<ModEditor> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  context.t('modOptionsUnavailable'),
-                  style: Theme.of(context).textTheme.bodySmall,
+                OutlinedButton.icon(
+                  onPressed: widget.locked
+                      ? null
+                      : () => guard(context, () async {
+                          final options = await editModOptions(
+                            context,
+                            mod,
+                            context
+                                .read<LauncherController>()
+                                .installation
+                                .server,
+                          );
+                          if (!mounted || options == null || widget.locked) {
+                            return;
+                          }
+                          await widget.onChanged([
+                            for (final m in widget.mods)
+                              m.id == mod.id ? m.configured(options) : m,
+                          ]);
+                        }),
+                  icon: const Icon(Icons.tune),
+                  label: Text(context.t('modSettings')),
                 ),
               ],
             ),

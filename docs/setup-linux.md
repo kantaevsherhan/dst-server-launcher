@@ -69,3 +69,9 @@ References: [Valve SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD),
 [Fedora Steam guidance](https://docs.fedoraproject.org/en-US/gaming/proton/).
 
 Building on Ubuntu is covered by CI; live game behavior on all five distro families remains a manual verification task.
+
+## Prepare a world on another computer
+
+In Installation select Linux and Configure Linux server. Set the surface, caves, mods, game mode and player limit in the wizard. Save the ZIP and transfer it privately; it contains the cluster password and shard key. Extract it, inspect system dependencies with `bash install-dst-server.sh --deps`, then run `bash configure-world.sh`. Supply the Klei token at the terminal prompt. Existing worlds with the same ID are preserved. Launch each shard with the printed command in a separate session.
+
+The desktop tray uses Ayatana AppIndicator (or AppIndicator). The headless installer does not require this library.

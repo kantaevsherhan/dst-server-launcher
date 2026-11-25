@@ -13,6 +13,7 @@ import '../data/local_repository.dart';
 import '../data/platform_services.dart';
 import '../domain/models.dart';
 import 'workshop.dart';
+import 'world_settings.dart';
 
 class ServerDetailScreen extends StatefulWidget {
   const ServerDetailScreen({required this.id, super.key});
@@ -263,7 +264,7 @@ class _ServerDetailScreenState extends State<ServerDetailScreen> {
             1 => Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                InlineHelp(context.t('generationReadOnly'), warning: true),
+                InlineHelp(context.t('newTerrainOnly')),
                 const SizedBox(height: 24),
                 Panel(
                   child: Column(
@@ -280,7 +281,22 @@ class _ServerDetailScreenState extends State<ServerDetailScreen> {
                         '${context.t('worldSize')}: ${context.t(profile.worldSize)}',
                       ),
                       const SizedBox(height: 12),
-                      if (profile.caves) Text(context.t('cavePreset')),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final cave in [false, if (profile.caves) true])
+                            WorldSettingsButton(
+                              caves: cave,
+                              enabled: !active && !busy && profile.manageMods,
+                              values: cave
+                                  ? profile.caveOptions
+                                  : profile.surfaceOptions,
+                              onChanged: (v) =>
+                                  action(() => c.updateWorld(profile, cave, v)),
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                 ),

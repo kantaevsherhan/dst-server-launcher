@@ -3,6 +3,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
+
+import '../data/linux_world_bundle.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -15,9 +20,11 @@ import '../data/platform_services.dart';
 import '../domain/models.dart';
 import 'installation.dart';
 import 'workshop.dart';
+import 'world_settings.dart';
 
 class WizardScreen extends StatefulWidget {
-  const WizardScreen({super.key});
+  const WizardScreen({super.key, this.exportLinux = false});
+  final bool exportLinux;
   @override
   State<WizardScreen> createState() => _WizardScreenState();
 }
@@ -47,6 +54,7 @@ class _WizardScreenState extends State<WizardScreen> {
       id = ServerProfile.newId(),
       secret = ServerProfile.randomKey();
   String? root;
+  Map<String, String> surfaceOptions = {}, caveOptions = {};
   List<ModSpec> mods = [];
   Map<int, bool>? ports;
   Timer? debounce;
@@ -67,6 +75,8 @@ class _WizardScreenState extends State<WizardScreen> {
         pvp = j['pvp'] ?? false;
         pause = j['pause'] ?? true;
         worldSize = j['worldSize'] ?? 'default';
+        surfaceOptions = Map<String, String>.from(j['surfaceOptions'] ?? {});
+        caveOptions = Map<String, String>.from(j['caveOptions'] ?? {});
         root = j['root'];
         mods = (j['mods'] as List? ?? [])
             .map((m) => ModSpec.fromJson(m))
@@ -99,6 +109,8 @@ class _WizardScreenState extends State<WizardScreen> {
           'pause': pause,
           'worldSize': worldSize,
           'root': root,
+          'surfaceOptions': surfaceOptions,
+          'caveOptions': caveOptions,
           'mods': mods.map((m) => m.toJson()).toList(),
         }),
       ),
@@ -130,6 +142,8 @@ class _WizardScreenState extends State<WizardScreen> {
     pvp: pvp,
     pause: pause,
     worldSize: worldSize,
+    surfaceOptions: surfaceOptions,
+    caveOptions: caveOptions,
     mods: mods,
   );
   String? singleLine(String? value, {bool required = false}) {
@@ -142,12 +156,15 @@ class _WizardScreenState extends State<WizardScreen> {
     return null;
   }
 
+  bool get linuxExport =>
+      controller.targetSystem == TargetPlatformOS.linux &&
+      (!controller.localTarget || widget.exportLinux);
   Future<void> advance() async {
-    if (step == 1 && !controller.localTarget) {
+    if (step == 1 && !controller.localTarget && !linuxExport) {
       context.go('/');
       return;
     }
-    if (step == 1 && controller.installation.server == null) {
+    if (step == 1 && !linuxExport && controller.installation.server == null) {
       await guard(
         context,
         () async => throw StateError(context.t('needInstall')),
@@ -156,6 +173,7 @@ class _WizardScreenState extends State<WizardScreen> {
     }
     if (step == 2 && !form.currentState!.validate()) return;
     if (step == 6 &&
+        !linuxExport &&
         (token.text.trim().isEmpty ||
             RegExp(r'[\r\n\x00]').hasMatch(token.text))) {
       await guard(
@@ -168,6 +186,22 @@ class _WizardScreenState extends State<WizardScreen> {
       setState(() => saving = true);
       final portBusyText = context.t('portBusy');
       await guard(context, () async {
+        if (linuxExport) {
+          final bytes = linuxWorldBundle(
+            profile,
+            await rootBundle.loadString('scripts/linux/install-dst-server.sh'),
+            await rootBundle.loadString('scripts/linux/configure-world.sh'),
+          );
+          final path = await FilePicker.saveFile(
+            fileName: 'DST-Linux-$id.zip',
+            bytes: bytes,
+          );
+          if (path == null) return;
+          debounce?.cancel();
+          await controller.preferences.remove('wizardDraft');
+          if (mounted) setState(() => step = 8);
+          return;
+        }
         final checks = await LocalPortInspector().inspect(profile.ports);
         if (checks.values.contains(false)) {
           throw StateError(
@@ -181,7 +215,7 @@ class _WizardScreenState extends State<WizardScreen> {
       });
       if (mounted) setState(() => saving = false);
     } else if (step == 8) {
-      context.go('/server/$id');
+      context.go(linuxExport ? '/' : '/server/$id');
     } else {
       setState(() => step++);
       _saveDraft();
@@ -192,7 +226,7 @@ class _WizardScreenState extends State<WizardScreen> {
   Widget build(BuildContext context) {
     final c = context.watch<LauncherController>();
     final scheme = Theme.of(context).colorScheme;
-    final count = c.localTarget ? steps.length : 2;
+    final count = c.localTarget || linuxExport ? steps.length : 2;
     final progress = '${context.t('stepOf')} ${step + 1} / $count';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -311,7 +345,11 @@ class _WizardScreenState extends State<WizardScreen> {
                   context.t(
                     saving
                         ? 'creating'
-                        : !c.localTarget && step == 1
+                        : !c.localTarget && !linuxExport && step == 1
+                        ? 'finishGuide'
+                        : linuxExport && step == 7
+                        ? 'exportLinux'
+                        : linuxExport && step == 8
                         ? 'finishGuide'
                         : step == 7
                         ? 'finishReview'
@@ -352,7 +390,11 @@ class _WizardScreenState extends State<WizardScreen> {
           const SizedBox(height: 12),
           Text(
             context.t(
-              controller.localTarget ? 'localTargetHelp' : 'otherTargetHelp',
+              linuxExport
+                  ? 'linuxExportHelp'
+                  : controller.localTarget
+                  ? 'localTargetHelp'
+                  : 'otherTargetHelp',
             ),
           ),
           const SizedBox(height: 24),
@@ -546,16 +588,18 @@ class _WizardScreenState extends State<WizardScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          DropdownButtonFormField<String>(
-            initialValue: worldSize,
-            decoration: InputDecoration(labelText: context.t('worldSize')),
-            items: ['default', 'small', 'medium', 'large', 'huge']
-                .map(
-                  (v) => DropdownMenuItem(value: v, child: Text(context.t(v))),
-                )
-                .toList(),
-            onChanged: (v) {
-              setState(() => worldSize = v!);
+          WorldSettingsButton(
+            caves: false,
+            values: {
+              if (worldSize != 'default' && worldSize != 'large')
+                'world_size': worldSize,
+              ...surfaceOptions,
+            },
+            onChanged: (v) async {
+              setState(() {
+                surfaceOptions = v;
+                worldSize = 'default';
+              });
               _saveDraft();
             },
           ),
@@ -586,6 +630,15 @@ class _WizardScreenState extends State<WizardScreen> {
                 _saveDraft();
               },
             ),
+            if (caves)
+              WorldSettingsButton(
+                caves: true,
+                values: caveOptions,
+                onChanged: (v) async {
+                  setState(() => caveOptions = v);
+                  _saveDraft();
+                },
+              ),
           ],
         ),
       ),
@@ -601,67 +654,76 @@ class _WizardScreenState extends State<WizardScreen> {
         },
       ),
     ),
-    6 => _heading(
-      'tokenTitle',
-      'tokenHelp',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: token,
-            obscureText: obscure,
-            enableSuggestions: false,
-            autocorrect: false,
-            decoration: InputDecoration(
-              labelText: context.t('token'),
-              suffixIcon: IconButton(
-                tooltip: context.t('showPassword'),
-                onPressed: () => setState(() => obscure = !obscure),
-                icon: Icon(PhosphorIcons.eye()),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextButton.icon(
-            onPressed: () => guard(
-              context,
-              () => openExternal(
-                'https://accounts.klei.com/account/game/servers?game=DontStarveTogether',
-              ),
-            ),
-            icon: Icon(PhosphorIcons.arrowSquareOut(), size: 18),
-            label: Text(context.t('getToken')),
-          ),
-          SectionLabel(context.t('network')),
-          InlineHelp(context.t('networkHelp')),
-          const SizedBox(height: 20),
-          OutlinedButton.icon(
-            onPressed: () => guard(context, () async {
-              final values = await LocalPortInspector().inspect(profile.ports);
-              if (mounted) setState(() => ports = values);
-            }),
-            icon: Icon(PhosphorIcons.plugsConnected()),
-            label: Text(context.t('checkPorts')),
-          ),
-          const SizedBox(height: 16),
-          if (ports != null)
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: ports!.entries
-                  .map(
-                    (e) => StatusChip(
-                      '${e.key} UDP · ${context.t(e.value ? 'portFree' : 'portBusy')}',
-                      active: e.value,
+    6 =>
+      linuxExport
+          ? _heading(
+              'stepNetwork',
+              'linuxTokenLater',
+              child: Panel(child: Text('${profile.ports.join(', ')} UDP')),
+            )
+          : _heading(
+              'tokenTitle',
+              'tokenHelp',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: token,
+                    obscureText: obscure,
+                    enableSuggestions: false,
+                    autocorrect: false,
+                    decoration: InputDecoration(
+                      labelText: context.t('token'),
+                      suffixIcon: IconButton(
+                        tooltip: context.t('showPassword'),
+                        onPressed: () => setState(() => obscure = !obscure),
+                        icon: Icon(PhosphorIcons.eye()),
+                      ),
                     ),
-                  )
-                  .toList(),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton.icon(
+                    onPressed: () => guard(
+                      context,
+                      () => openExternal(
+                        'https://accounts.klei.com/account/game/servers?game=DontStarveTogether',
+                      ),
+                    ),
+                    icon: Icon(PhosphorIcons.arrowSquareOut(), size: 18),
+                    label: Text(context.t('getToken')),
+                  ),
+                  SectionLabel(context.t('network')),
+                  InlineHelp(context.t('networkHelp')),
+                  const SizedBox(height: 20),
+                  OutlinedButton.icon(
+                    onPressed: () => guard(context, () async {
+                      final values = await LocalPortInspector().inspect(
+                        profile.ports,
+                      );
+                      if (mounted) setState(() => ports = values);
+                    }),
+                    icon: Icon(PhosphorIcons.plugsConnected()),
+                    label: Text(context.t('checkPorts')),
+                  ),
+                  const SizedBox(height: 16),
+                  if (ports != null)
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: ports!.entries
+                          .map(
+                            (e) => StatusChip(
+                              '${e.key} UDP · ${context.t(e.value ? 'portFree' : 'portBusy')}',
+                              active: e.value,
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  const SizedBox(height: 16),
+                  Text(context.t('externalUnknown')),
+                ],
+              ),
             ),
-          const SizedBox(height: 16),
-          Text(context.t('externalUnknown')),
-        ],
-      ),
-    ),
     7 => _heading(
       'reviewTitle',
       'reviewHelp',
@@ -691,12 +753,18 @@ class _WizardScreenState extends State<WizardScreen> {
                   '${context.t('caves')}: ${context.t(caves ? 'enabled' : 'disabled')}  ·  ${context.t('mods')}: ${mods.length}',
                 ),
                 const SizedBox(height: 12),
-                SelectableText(profile.storageRoot),
+                if (linuxExport)
+                  Text(context.t('linuxExportHelp'))
+                else
+                  SelectableText(profile.storageRoot),
                 const SizedBox(height: 16),
-                StatusChip(
-                  context.t(token.text.isEmpty ? 'tokenMissing' : 'tokenAdded'),
-                  active: token.text.isNotEmpty,
-                ),
+                if (!linuxExport)
+                  StatusChip(
+                    context.t(
+                      token.text.isEmpty ? 'tokenMissing' : 'tokenAdded',
+                    ),
+                    active: token.text.isNotEmpty,
+                  ),
               ],
             ),
           ),
@@ -729,7 +797,7 @@ class _WizardScreenState extends State<WizardScreen> {
                     ],
                   ),
                 ),
-              Text('mods/dedicated_server_mods_setup.lua'),
+              const Text('mods/dedicated_server_mods_setup.lua'),
               CommandBlock(ClusterConfigGenerator().workshopSetup(mods)),
             ],
           ),
@@ -737,8 +805,8 @@ class _WizardScreenState extends State<WizardScreen> {
       ),
     ),
     _ => _heading(
-      'launchTitle',
-      'launchHelp',
+      linuxExport ? 'linuxReady' : 'launchTitle',
+      linuxExport ? 'linuxNext' : 'launchHelp',
       child: Panel(
         child: Column(
           children: [
@@ -750,7 +818,7 @@ class _WizardScreenState extends State<WizardScreen> {
             const SizedBox(height: 24),
             Text(name.text, style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 16),
-            InlineHelp(context.t('serverHelp')),
+            InlineHelp(context.t(linuxExport ? 'linuxNext' : 'serverHelp')),
           ],
         ),
       ),

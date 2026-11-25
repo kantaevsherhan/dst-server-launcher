@@ -320,10 +320,16 @@ class ProcessSupervisor extends ChangeNotifier implements DstProcessController {
     try {
       await Future.wait(owned.map((process) => process.exitCode))
           .timeout(stopTimeout);
+      await flushLogs();
       return true;
     } on TimeoutException {
       return false;
     }
+  }
+
+  Future<void> flushLogs() async {
+    await _journalQueue;
+    await Future.wait(_logQueues.values.toList());
   }
 
   @override

@@ -89,3 +89,11 @@ MIT. Не связан с Klei Entertainment или Valve. Игровые фай
 Open **Workshop → My Steam subscriptions** to browse DST subscriptions synced by the local Steam client. When editing a world, choose a mod with **+**. On shared PCs, select the local Steam account. The list can include client-only items. Restart the stopped world after changing its mod selection.
 
 For Linux Server over SSH, download `install-dst-server.sh` from the release. See [Linux setup](docs/setup-linux.md) for dependency and shard commands.
+
+## World and mod settings
+
+Choose **Surface settings** or **Cave settings** in the wizard or a stopped managed world's World tab. Generation settings apply to newly generated terrain. The editor reads icons from the installed game. Workshop entries show whether they are already in the selected world. **Configure mod** reads declarative options in local modinfo.lua files and accepts typed custom values for options built by Lua code.
+
+Closing the desktop window keeps running servers in the background. Restore it from the tray or its shortcut. To quit, use the tray menu or the logo menu. Linux desktops without a StatusNotifier tray minimize the window instead.
+
+Choose **Installation → Linux → Configure Linux server** to export an SSH-ready world package. Extract it privately on the target machine and run `bash configure-world.sh`. The script requests the token on the Linux host.

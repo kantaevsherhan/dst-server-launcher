@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
@@ -215,6 +216,15 @@ class _InstallationPanelState extends State<InstallationPanel> {
         if (linux) ...[
           const SizedBox(height: 20),
           InlineHelp(context.t('headlessHelp')),
+          if (GoRouterState.of(context).uri.path == '/install')
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FilledButton.icon(
+                onPressed: () => context.go('/create?export=linux'),
+                icon: const Icon(PhosphorIcons.linuxLogo),
+                label: Text(context.t('configureLinux')),
+              ),
+            ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 12,

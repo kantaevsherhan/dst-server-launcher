@@ -217,3 +217,23 @@ class LocalPortInspector implements PortInspector {
     return result;
   }
 }
+
+Future<bool> hasTrayHost(bool trayReady) async {
+  if (!trayReady || !Platform.isLinux) return trayReady;
+  try {
+    final r = await Process.run('gdbus', [
+      'call',
+      '--session',
+      '--dest',
+      'org.freedesktop.DBus',
+      '--object-path',
+      '/org/freedesktop/DBus',
+      '--method',
+      'org.freedesktop.DBus.NameHasOwner',
+      'org.kde.StatusNotifierWatcher',
+    ]);
+    return r.exitCode == 0 && r.stdout.toString().contains('true');
+  } catch (_) {
+    return false;
+  }
+}

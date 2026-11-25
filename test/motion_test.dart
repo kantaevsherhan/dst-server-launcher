@@ -15,7 +15,7 @@ void main() {
       addTearDown(focus.dispose);
       Future<void> show() => tester.pumpWidget(
         MaterialApp(
-          theme: launcherTheme(Brightness.light),
+          theme: launcherTheme(),
           home: MediaQuery(
             data: MediaQueryData(disableAnimations: reduced),
             child: Scaffold(

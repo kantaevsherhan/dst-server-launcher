@@ -32,30 +32,6 @@ class SettingsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  context.t('appearance'),
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 20),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    ChoiceChip(
-                      label: Text(context.t('dark')),
-                      selected: c.themeMode == ThemeMode.dark,
-                      onSelected: (_) =>
-                          guard(context, () => c.setTheme('dark')),
-                    ),
-                    ChoiceChip(
-                      label: Text(context.t('light')),
-                      selected: c.themeMode == ThemeMode.light,
-                      onSelected: (_) =>
-                          guard(context, () => c.setTheme('light')),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
                 DropdownButtonFormField<String>(
                   key: ValueKey(c.language),
                   initialValue: c.language,

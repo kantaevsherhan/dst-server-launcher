@@ -77,7 +77,10 @@ void main() {
       expect(prefs.getString('targetSystem'), other.toLowerCase());
       await tester.tap(find.text('Create server'));
       await tester.pumpAndSettle();
-      expect(find.text('Step 1 / 2'), findsOneWidget);
+      expect(
+        find.text(Platform.isWindows ? 'Step 1 / 9' : 'Step 1 / 2'),
+        findsOneWidget,
+      );
       await tester.tap(find.text('Next'));
       await tester.pumpAndSettle();
       expect(find.text('Save instructions'), findsOneWidget);
@@ -86,9 +89,13 @@ void main() {
         find.text('Debian · Ubuntu · Linux Mint · Manjaro · Fedora'),
         Platform.isWindows ? findsOneWidget : findsNothing,
       );
-      await tester.tap(find.text('Finish'));
+      await tester.tap(find.text(Platform.isWindows ? 'Next' : 'Finish'));
       await tester.pumpAndSettle();
-      expect(find.text('Server setup wizard'), findsOneWidget);
+      if (Platform.isWindows) {
+        expect(find.text('Step 3 / 9'), findsOneWidget);
+      } else {
+        expect(find.text('Server setup wizard'), findsOneWidget);
+      }
       expect(controller.profiles, isEmpty);
       await tester.pumpWidget(const SizedBox.shrink());
       controller.supervisor.dispose();
@@ -162,7 +169,7 @@ void main() {
     await tester.pumpWidget(LauncherApp(controller: c, windowControls: false));
     await tester.pumpAndSettle();
     expect(find.text('Server setup wizard'), findsOneWidget);
-    expect(c.themeMode, ThemeMode.light);
+    expect(c.themeMode, ThemeMode.dark);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     c.supervisor.dispose();

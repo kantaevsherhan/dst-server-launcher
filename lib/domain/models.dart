@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'setting_values.dart';
+
 enum ShardState { stopped, starting, running, stopping, crashed, attention }
 
 class ModSpec {
@@ -11,10 +13,14 @@ class ModSpec {
     this.caves = true,
     this.collection = false,
     this.preview,
+    this.options = const {},
   });
   final String id, title;
   final bool master, caves, collection;
   final String? preview;
+  final Map<String, Object> options;
+  ModSpec configured(Map<String, Object> values) =>
+      ModSpec.fromJson({...toJson(), 'options': values});
   Map<String, dynamic> toJson() => {
     'id': id,
     'title': title,
@@ -22,6 +28,7 @@ class ModSpec {
     'caves': caves,
     'collection': collection,
     'preview': preview,
+    'options': options,
   };
   factory ModSpec.fromJson(Map<String, dynamic> j) => ModSpec(
     id: j['id'],
@@ -30,6 +37,7 @@ class ModSpec {
     caves: j['caves'] ?? true,
     collection: j['collection'] ?? false,
     preview: j['preview'],
+    options: Map<String, Object>.from(j['options'] ?? {}),
   );
   ModSpec enabled({bool? master, bool? caves}) => ModSpec(
     id: id,
@@ -38,6 +46,7 @@ class ModSpec {
     caves: caves ?? this.caves,
     collection: collection,
     preview: preview,
+    options: options,
   );
 }
 
@@ -56,6 +65,8 @@ class ServerProfile {
     this.caves = true,
     this.pvp = false,
     this.pause = true,
+    this.surfaceOptions = const {},
+    this.caveOptions = const {},
     this.worldSize = 'default',
     this.mods = const [],
     this.manageMods = true,
@@ -72,6 +83,7 @@ class ServerProfile {
   final int slots, portBase;
   final bool caves, pvp, pause, manageMods;
   final List<ModSpec> mods;
+  final Map<String, String> surfaceOptions, caveOptions;
   List<String> get shards => ['Master', if (caves) 'Caves'];
   List<int> get ports => [
     portBase,
@@ -103,7 +115,16 @@ class ServerProfile {
     if (secret.isEmpty || !RegExp(r'^[a-zA-Z0-9]+$').hasMatch(secret)) {
       throw const FormatException('Invalid shard key');
     }
+    validateWorld(surfaceOptions, 'forest');
+    validateWorld(caveOptions, 'cave');
     for (final m in mods) {
+      for (final e in m.options.entries) {
+        if (e.key.isEmpty || e.key.length > 256) {
+          throw const FormatException('Invalid mod option name');
+        }
+        luaValue(e.key);
+        luaValue(e.value);
+      }
       if (!RegExp(r'^[1-9][0-9]{0,19}$').hasMatch(m.id)) {
         throw const FormatException('Invalid Workshop ID');
       }
@@ -127,6 +148,8 @@ class ServerProfile {
     'pvp': pvp,
     'pause': pause,
     'worldSize': worldSize,
+    'surfaceOptions': surfaceOptions,
+    'caveOptions': caveOptions,
     'mods': mods.map((m) => m.toJson()).toList(),
   };
   factory ServerProfile.fromJson(Map<String, dynamic> j) => ServerProfile(
@@ -144,6 +167,8 @@ class ServerProfile {
     caves: j['caves'] ?? true,
     pvp: j['pvp'] ?? false,
     pause: j['pause'] ?? true,
+    surfaceOptions: Map<String, String>.from(j['surfaceOptions'] ?? {}),
+    caveOptions: Map<String, String>.from(j['caveOptions'] ?? {}),
     worldSize: j['worldSize'] ?? 'default',
     mods: (j['mods'] as List? ?? [])
         .map((m) => ModSpec.fromJson(Map<String, dynamic>.from(m)))

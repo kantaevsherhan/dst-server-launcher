@@ -95,9 +95,7 @@ class LauncherController extends ChangeNotifier {
   }
 
   String get language => preferences.getString('language') ?? 'ru';
-  ThemeMode get themeMode => preferences.getString('theme') == 'light'
-      ? ThemeMode.light
-      : ThemeMode.dark;
+  ThemeMode get themeMode => ThemeMode.dark;
   String get storageRoot =>
       preferences.getString('storageRoot') ??
       p.join(repository.appDir.path, 'Klei');
@@ -114,11 +112,6 @@ class LauncherController extends ChangeNotifier {
 
   Future<void> setLanguage(String value) async {
     await preferences.setString('language', value);
-    notifyListeners();
-  }
-
-  Future<void> setTheme(String value) async {
-    await preferences.setString('theme', value);
     notifyListeners();
   }
 
@@ -185,6 +178,66 @@ class LauncherController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateWorld(
+    ServerProfile profile,
+    bool cave,
+    Map<String, String> values,
+  ) async {
+    if (!profile.manageMods ||
+        supervisor.active(profile) ||
+        !supervisor.maintenance.add(profile.id)) {
+      throw StateError(
+        'Stop the managed world before editing its configuration.',
+      );
+    }
+    notifyListeners();
+    try {
+      final current = profiles.firstWhere((v) => v.id == profile.id);
+      final updated = ServerProfile.fromJson({
+        ...current.toJson(),
+        (cave ? 'caveOptions' : 'surfaceOptions'): values,
+      });
+      final next = profiles
+          .map((v) => v.id == current.id ? updated : v)
+          .toList();
+      final before = repository.preview(current),
+          after = repository.preview(updated);
+      final changes = <File, String>{};
+      for (final shard in current.shards) {
+        final key = '$shard/worldgenoverride.lua';
+        if (before[key] == after[key]) continue;
+        final file = File(p.join(clusterDirectory(current), key));
+        final old = await file.readAsString();
+        if (old.replaceAll('\r\n', '\n').trim() != before[key]!.trim()) {
+          throw StateError(
+            'This shard has external world overrides. Preserve them by editing the file directly.',
+          );
+        }
+        changes[file] = old;
+      }
+      final written = <File>[];
+      try {
+        for (final file in changes.keys) {
+          await atomicWrite(
+            file,
+            after['${p.basename(file.parent.path)}/worldgenoverride.lua']!,
+          );
+          written.add(file);
+        }
+        await repository.save(next);
+        profiles = next;
+      } catch (_) {
+        for (final file in written.reversed) {
+          await atomicWrite(file, changes[file]!);
+        }
+        rethrow;
+      }
+    } finally {
+      supervisor.maintenance.remove(profile.id);
+      notifyListeners();
+    }
+  }
+
   Future<void> updateMods(ServerProfile profile, List<ModSpec> mods) async {
     if (!profile.manageMods || supervisor.maintenance.contains(profile.id)) {
       throw StateError(
@@ -227,7 +280,7 @@ class LauncherController extends ChangeNotifier {
     );
     await file.writeAsString(
       const JsonEncoder.withIndent('  ').convert({
-        'version': '0.2.1',
+        'version': '0.3.0',
         'os': Platform.operatingSystem,
         'steamDetected': installation.steam != null,
         'serverDetected': installation.server != null,

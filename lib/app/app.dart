@@ -1,9 +1,13 @@
+import 'dart:io';
+
+import 'package:tray_manager/tray_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../core/icons.dart';
+import '../data/platform_services.dart';
 
 import 'package:window_manager/window_manager.dart';
 
@@ -43,7 +47,12 @@ class _LauncherAppState extends State<LauncherApp> {
         ),
         routes: [
           GoRoute(path: '/', builder: (_, _) => const DashboardScreen()),
-          GoRoute(path: '/create', builder: (_, _) => const WizardScreen()),
+          GoRoute(
+            path: '/create',
+            builder: (_, state) => WizardScreen(
+              exportLinux: state.uri.queryParameters['export'] == 'linux',
+            ),
+          ),
           GoRoute(
             path: '/install',
             builder: (_, _) => const InstallationScreen(),
@@ -72,8 +81,7 @@ class _LauncherAppState extends State<LauncherApp> {
       builder: (context, controller, _) => MaterialApp.router(
         title: 'DST Server Launcher',
         debugShowCheckedModeBanner: false,
-        theme: launcherTheme(Brightness.light),
-        darkTheme: launcherTheme(Brightness.dark),
+        theme: launcherTheme(),
         themeMode: controller.themeMode,
         locale: Locale(controller.language),
         supportedLocales: const [Locale('ru'), Locale('en')],
@@ -103,22 +111,94 @@ class LauncherShell extends StatefulWidget {
   State<LauncherShell> createState() => _LauncherShellState();
 }
 
-class _LauncherShellState extends State<LauncherShell> with WindowListener {
-  bool _closing = false;
+class _LauncherShellState extends State<LauncherShell>
+    with WindowListener, TrayListener {
+  bool _closing = false, trayReady = false;
+  String? trayLanguage;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final lang = Localizations.localeOf(context).languageCode;
+    if (widget.windowControls && lang != trayLanguage) {
+      trayLanguage = lang;
+      setupTray(context.t('showLauncher'), context.t('quitLauncher'));
+    }
+  }
+
+  Future<void> setupTray(String show, String quit) async {
+    try {
+      if (!trayReady) {
+        await trayManager.setIcon(
+          Platform.isWindows
+              ? 'windows/runner/resources/app_icon.ico'
+              : 'assets/images/launcher-logo.png',
+        );
+      }
+      await trayManager.setContextMenu(
+        Menu(
+          items: [
+            MenuItem(key: 'open', label: show),
+            MenuItem.separator(),
+            MenuItem(key: 'quit', label: quit),
+          ],
+        ),
+      );
+      trayReady = true;
+    } catch (_) {
+      trayReady = false;
+    }
+  }
+
+  Future<void> restore() async {
+    await windowManager.show();
+    await windowManager.restore();
+    await windowManager.focus();
+  }
+
+  @override
+  void onTrayIconMouseDown() {
+    restore();
+  }
+
+  @override
+  void onTrayIconRightMouseDown() {
+    trayManager.popUpContextMenu();
+  }
+
+  @override
+  void onTrayMenuItemClick(MenuItem item) async {
+    await restore();
+    if (item.key == 'quit' && mounted) await exitLauncher();
+  }
+
   @override
   void initState() {
     super.initState();
-    if (widget.windowControls) windowManager.addListener(this);
+    if (widget.windowControls) {
+      windowManager.addListener(this);
+      trayManager.addListener(this);
+    }
   }
 
   @override
   void dispose() {
-    if (widget.windowControls) windowManager.removeListener(this);
+    if (widget.windowControls) {
+      windowManager.removeListener(this);
+      trayManager.removeListener(this);
+    }
     super.dispose();
   }
 
   @override
   void onWindowClose() async {
+    if (await hasTrayHost(trayReady)) {
+      await windowManager.hide();
+    } else {
+      await windowManager.minimize();
+    }
+  }
+
+  Future<void> exitLauncher() async {
     if (_closing) return;
     _closing = true;
     final controller = context.read<LauncherController>();
@@ -126,7 +206,14 @@ class _LauncherShellState extends State<LauncherShell> with WindowListener {
       final active = controller.profiles
           .where(controller.supervisor.active)
           .toList();
+      if (controller.installing ||
+          controller.supervisor.maintenance.isNotEmpty) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(context.t('busy'))));
+        return;
+      }
       if (active.isEmpty) {
+        if (trayReady) await trayManager.destroy();
         await windowManager.destroy();
         return;
       }
@@ -140,10 +227,6 @@ class _LauncherShellState extends State<LauncherShell> with WindowListener {
               onPressed: () => Navigator.pop(ctx),
               child: Text(ctx.t('cancel')),
             ),
-            OutlinedButton(
-              onPressed: () => Navigator.pop(ctx, 'background'),
-              child: Text(ctx.t('keepRunning')),
-            ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, 'stop'),
               child: Text(ctx.t('stopAndExit')),
@@ -151,9 +234,6 @@ class _LauncherShellState extends State<LauncherShell> with WindowListener {
           ],
         ),
       );
-      if (action == 'background') {
-        await windowManager.minimize();
-      }
       if (action == 'stop' && mounted) {
         final timeoutText = context.t('stopTimeout');
         await guard(context, () async {
@@ -162,6 +242,7 @@ class _LauncherShellState extends State<LauncherShell> with WindowListener {
               throw StateError(timeoutText);
             }
           }
+          if (trayReady) await trayManager.destroy();
           await windowManager.destroy();
         });
       }
@@ -192,11 +273,21 @@ class _LauncherShellState extends State<LauncherShell> with WindowListener {
                   title: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Image.asset(
-                        'assets/images/launcher-logo.png',
-                        width: 24,
-                        height: 24,
-                        excludeFromSemantics: true,
+                      PopupMenuButton<String>(
+                        tooltip: context.t('appMenu'),
+                        onSelected: (_) => exitLauncher(),
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'exit',
+                            child: Text(context.t('quitLauncher')),
+                          ),
+                        ],
+                        child: Image.asset(
+                          'assets/images/launcher-logo.png',
+                          width: 24,
+                          height: 24,
+                          excludeFromSemantics: true,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       const Text(

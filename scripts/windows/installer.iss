@@ -2,7 +2,7 @@
 [Setup]
 AppId={{2A7434B9-33AA-47EC-B1E3-3FAE783A5660}
 AppName={#AppName}
-AppVersion=0.2.1
+AppVersion=0.3.0
 SetupIconFile=..\..\windows\runner\resources\app_icon.ico
 AppPublisher=DST Server Launcher contributors
 DefaultDirName={localappdata}\Programs\DST Server Launcher

@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../app/controller.dart';
 import '../app/strings.dart';
 import '../core/icons.dart';
+import '../core/launcher_dialog.dart';
+import '../core/widgets.dart';
 import '../data/workshop_service.dart';
 import '../data/steam_subscriptions.dart';
 import '../domain/models.dart';
@@ -11,11 +13,20 @@ import '../domain/models.dart';
 Future<ModSpec?> browseMods(
   BuildContext context, {
   bool select = false,
+  Map<String, String>? added,
+  Future<void> Function(ModSpec)? onAdd,
   bool subscriptions = false,
 }) => showDialog<ModSpec>(
   context: context,
   builder: (_) => _Catalog(
     select: select,
+    onAdd: onAdd,
+    added:
+        added ??
+        {
+          for (final p in context.read<LauncherController>().profiles)
+            for (final m in p.mods) m.id: p.name,
+        },
     subscriptions: subscriptions,
     repository: context.read<LauncherController>().workshop,
   ),
@@ -24,7 +35,7 @@ Future<ModSpec?> browseMods(
 Future<void> showMod(BuildContext context, WorkshopEntry entry) =>
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => LauncherDialog(
         title: Text(entry.mod.title),
         content: SizedBox(
           width: 560,
@@ -64,15 +75,21 @@ class _Catalog extends StatefulWidget {
   const _Catalog({
     required this.repository,
     required this.select,
+    required this.added,
+    this.onAdd,
     required this.subscriptions,
   });
   final SteamWorkshopRepository repository;
   final bool select, subscriptions;
+  final Map<String, String> added;
+  final Future<void> Function(ModSpec)? onAdd;
   @override
   State<_Catalog> createState() => _CatalogState();
 }
 
 class _CatalogState extends State<_Catalog> {
+  late final added = Map<String, String>.of(widget.added);
+  bool adding = false;
   final input = TextEditingController();
   int page = 1;
   String search = '';
@@ -100,7 +117,7 @@ class _CatalogState extends State<_Catalog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
+  Widget build(BuildContext context) => LauncherDialog(
     title: Text(
       context.t(widget.subscriptions ? 'mySubscriptions' : 'modCatalog'),
     ),
@@ -218,12 +235,49 @@ class _CatalogState extends State<_Catalog> {
                                               Icon(PhosphorIcons.puzzlePiece()),
                                         ),
                                   onTap: () => showMod(ctx, entry),
-                                  trailing: widget.select
+                                  dense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  trailing: added.containsKey(mod.id)
+                                      ? Tooltip(
+                                          message:
+                                              '${ctx.t('alreadyAdded')} ${added[mod.id]}',
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(Icons.check, size: 18),
+                                              const SizedBox(width: 4),
+                                              Text(ctx.t('alreadyAdded')),
+                                            ],
+                                          ),
+                                        )
+                                      : widget.select
                                       ? IconButton(
                                           tooltip: ctx.t('addMod'),
                                           icon: Icon(PhosphorIcons.plus()),
-                                          onPressed: entry.selectable
-                                              ? () => Navigator.pop(ctx, mod)
+                                          onPressed: entry.selectable && !adding
+                                              ? () async {
+                                                  if (widget.onAdd == null) {
+                                                    Navigator.pop(ctx, mod);
+                                                    return;
+                                                  }
+                                                  setState(() => adding = true);
+                                                  await guard(ctx, () async {
+                                                    await widget.onAdd!(mod);
+                                                    if (mounted) {
+                                                      setState(
+                                                        () =>
+                                                            added[mod.id] = '',
+                                                      );
+                                                    }
+                                                  });
+                                                  if (mounted) {
+                                                    setState(
+                                                      () => adding = false,
+                                                    );
+                                                  }
+                                                }
                                               : null,
                                         )
                                       : null,

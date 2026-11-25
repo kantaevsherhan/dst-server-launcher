@@ -13,32 +13,28 @@ abstract final class Tokens {
   static const radius = 6.0;
 }
 
-ThemeData launcherTheme(Brightness brightness) {
-  final dark = brightness == Brightness.dark;
+ThemeData launcherTheme() {
+  const brightness = Brightness.dark;
   final scheme =
       ColorScheme.fromSeed(
         seedColor: Tokens.burgundy,
         brightness: brightness,
       ).copyWith(
-        primary: dark ? Tokens.rose : Tokens.burgundy,
-        onPrimary: dark ? Tokens.ink : Colors.white,
-        primaryContainer: dark
-            ? const Color(0xff62464a)
-            : const Color(0xffeedbd5),
-        onPrimaryContainer: dark ? Tokens.parchment : Tokens.ink,
-        secondary: dark ? const Color(0xffb0c3cf) : Tokens.slate,
-        secondaryContainer: dark ? const Color(0xff485662) : Tokens.mist,
-        onSecondaryContainer: dark ? Tokens.parchment : Tokens.ink,
-        tertiary: dark ? const Color(0xffb4c3a6) : Tokens.sage,
-        surface: dark ? Tokens.night : Tokens.parchment,
-        onSurface: dark ? Tokens.parchment : Tokens.ink,
-        onSurfaceVariant: dark
-            ? const Color(0xffd2cec6)
-            : const Color(0xff55565b),
-        surfaceContainer: dark ? const Color(0xff393d43) : Tokens.paper,
-        surfaceContainerHighest: dark ? const Color(0xff48545d) : Tokens.mist,
-        outline: dark ? const Color(0xff92999d) : const Color(0xff73716e),
-        error: dark ? const Color(0xffffb4ac) : const Color(0xff963e37),
+        primary: Tokens.rose,
+        onPrimary: Tokens.ink,
+        primaryContainer: const Color(0xff62464a),
+        onPrimaryContainer: Tokens.parchment,
+        secondary: const Color(0xffb0c3cf),
+        secondaryContainer: const Color(0xff485662),
+        onSecondaryContainer: Tokens.parchment,
+        tertiary: const Color(0xffb4c3a6),
+        surface: Tokens.night,
+        onSurface: Tokens.parchment,
+        onSurfaceVariant: const Color(0xffd2cec6),
+        surfaceContainer: const Color(0xff393d43),
+        surfaceContainerHighest: const Color(0xff48545d),
+        outline: const Color(0xff92999d),
+        error: const Color(0xffffb4ac),
       );
   final base = ThemeData(
     useMaterial3: true,

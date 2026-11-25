@@ -1,5 +1,8 @@
 import '../domain/models.dart';
 
+import '../domain/setting_values.dart';
+import '../domain/world_catalog.dart';
+
 class ClusterConfigGenerator {
   Map<String, String> generate(ServerProfile p) {
     p.validate();
@@ -45,15 +48,25 @@ id = ${master ? 1 : 2}
 master_server_port = ${p.portBase + (master ? 2 : 4)}
 authentication_port = ${p.portBase + (master ? 3 : 5)}
 ''';
+      final custom = <String, String>{
+        'world_size': p.worldSize == 'large' ? 'default' : p.worldSize,
+        if (!master)
+          for (final e in p.surfaceOptions.entries)
+            if (syncedWorldKeys.contains(e.key)) e.key: e.value,
+        ...(master ? p.surfaceOptions : p.caveOptions),
+      };
+      final overrides = custom.entries
+          .map((e) => '${e.key} = ${luaValue(e.value)}')
+          .join(', ');
       result['$shard/worldgenoverride.lua'] =
           '''return {
   override_enabled = true,
   preset = "${master ? 'SURVIVAL_TOGETHER' : 'DST_CAVE'}",
-  overrides = { world_size = "${p.worldSize == 'large' ? 'default' : p.worldSize}" },
+  overrides = { $overrides },
 }
 ''';
       result['$shard/modoverrides.lua'] =
-          'return {\n${p.mods.where((m) => !m.collection && (master ? m.master : m.caves)).map((m) => '  ["workshop-${m.id}"] = { enabled = true, configuration_options = {} },').join('\n')}\n}\n';
+          'return {\n${p.mods.where((m) => !m.collection && (master ? m.master : m.caves)).map((m) => '  ["workshop-${m.id}"] = { enabled = true, configuration_options = {${m.options.entries.map((e) => '[${luaValue(e.key)}] = ${luaValue(e.value)}').join(', ')}} },').join('\n')}\n}\n';
     }
     return result;
   }

@@ -98,6 +98,7 @@ void main() {
       fake.exit(0);
     }
     await Future<void>.delayed(const Duration(milliseconds: 100));
+    await supervisor.flushLogs();
     supervisor.dispose();
     if (await temp.exists()) await temp.delete(recursive: true);
   });
